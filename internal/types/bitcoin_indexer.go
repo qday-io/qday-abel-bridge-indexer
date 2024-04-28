@@ -1,6 +1,9 @@
 package types
 
 import (
+	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 )
 
@@ -12,6 +15,11 @@ type BITCOINTxIndexer interface {
 	LatestBlock() (int64, error)
 	// CheckConfirmations get tx detail info
 	CheckConfirmations(txHash string) error
+
+	GetRawTransactionVerbose(txHash string) (*btcjson.TxRawResult, error)
+	BlockChainInfo() (*btcjson.GetBlockChainInfoResult, error)
+	GetRawTransaction(txHash *chainhash.Hash) (*btcutil.Tx, error)
+	GetBlockByHeight(height int64) (*wire.MsgBlock, error)
 }
 
 type BitcoinTxParseResult struct {

@@ -1,13 +1,13 @@
 package particle
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/b2network/b2-indexer/pkg/log"
@@ -70,7 +70,7 @@ func NewParticle(rpc, projectID, serverKey string, chainID int) (*Particle, erro
 }
 
 func (p *Particle) AAGetBTCAccount(btcPubKeys []string) (*AAGetBTCAccountResult, error) {
-	params := []AAGetBTCAccountReqParams{}
+	params := make([]AAGetBTCAccountReqParams, 0, 10)
 	for _, pubkey := range btcPubKeys {
 		params = append(params, AAGetBTCAccountReqParams{
 			Name:         "BTC",
@@ -99,14 +99,15 @@ func (p *Particle) do(particleReq Req, particleResponse any) error {
 		return err
 	}
 
-	log.Infof("particle req:", string(bodyJSON))
+	log.Infof("particle req:%v", string(bodyJSON))
 
-	b := strings.NewReader(string(bodyJSON))
+	//b := strings.NewReader(string(bodyJSON))
+
 	httpClient := &http.Client{
 		Timeout: time.Second * 10,
 	}
 
-	req, err := http.NewRequest("POST", p.particleRPC, b)
+	req, err := http.NewRequest("POST", p.particleRPC, bytes.NewReader(bodyJSON))
 	if err != nil {
 		return err
 	}
@@ -125,7 +126,7 @@ func (p *Particle) do(particleReq Req, particleResponse any) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("particle body:", string(body))
+	log.Infof("particle body:%v", string(body))
 	err = json.Unmarshal(body, &particleResponse)
 	if err != nil {
 		return err

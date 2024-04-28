@@ -1,0 +1,7 @@
+root-dir = ""
+log-level = "info"
+log-format = "console"
+database-source = "postgres://postgres:123456@localhost:5432/postgres"
+database-max-idle-conns = 10
+database-max-open-conns = 20
+database-conn-max-lifetime = 3600

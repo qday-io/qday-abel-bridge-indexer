@@ -63,7 +63,7 @@ func NewBitcoinIndexer(
 // ParseBlock parse block data by block height
 // NOTE: Currently, only transfer transactions are supported.
 func (b *Indexer) ParseBlock(height int64, txIndex int64) ([]*types.BitcoinTxParseResult, *wire.BlockHeader, error) {
-	blockResult, err := b.getBlockByHeight(height)
+	blockResult, err := b.GetBlockByHeight(height)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -88,25 +88,8 @@ func (b *Indexer) ParseBlock(height int64, txIndex int64) ([]*types.BitcoinTxPar
 	return blockParsedResult, &blockResult.Header, nil
 }
 
-// getBlockByHeight returns a raw block from the server given its height
-func (b *Indexer) getBlockByHeight(height int64) (*wire.MsgBlock, error) {
-	blockhash, err := b.client.GetBlockHash(height)
-	if err != nil {
-		return nil, err
-	}
-	msgBlock, err := b.client.GetBlock(blockhash)
-	if err != nil {
-		return nil, err
-	}
-	return msgBlock, nil
-}
-
 func (b *Indexer) CheckConfirmations(hash string) error {
-	txHash, err := chainhash.NewHashFromStr(hash)
-	if err != nil {
-		return err
-	}
-	txVerbose, err := b.client.GetRawTransactionVerbose(txHash)
+	txVerbose, err := b.GetRawTransactionVerbose(hash)
 	if err != nil {
 		return err
 	}
@@ -180,7 +163,7 @@ func (b *Indexer) parseFromAddress(txResult *wire.MsgTx) (fromAddress []types.Bi
 	for _, vin := range txResult.TxIn {
 		// get prev tx hash
 		prevTxID := vin.PreviousOutPoint.Hash
-		vinResult, err := b.client.GetRawTransaction(&prevTxID)
+		vinResult, err := b.GetRawTransaction(&prevTxID)
 		if err != nil {
 			return nil, fmt.Errorf("vin get raw transaction err:%w", err)
 		}
@@ -251,4 +234,33 @@ func (b *Indexer) LatestBlock() (int64, error) {
 // BlockChainInfo get block chain info
 func (b *Indexer) BlockChainInfo() (*btcjson.GetBlockChainInfoResult, error) {
 	return b.client.GetBlockChainInfo()
+}
+
+func (b *Indexer) GetRawTransactionVerbose(hash string) (*btcjson.TxRawResult, error) {
+	txHash, err := chainhash.NewHashFromStr(hash)
+	if err != nil {
+		return nil, err
+	}
+	txVerbose, err := b.client.GetRawTransactionVerbose(txHash)
+	if err != nil {
+		return nil, err
+	}
+	return txVerbose, nil
+}
+
+func (b *Indexer) GetRawTransaction(txHash *chainhash.Hash) (*btcutil.Tx, error) {
+	return b.client.GetRawTransaction(txHash)
+}
+
+// GetBlockByHeight returns a raw block from the server given its height
+func (b *Indexer) GetBlockByHeight(height int64) (*wire.MsgBlock, error) {
+	blockhash, err := b.client.GetBlockHash(height)
+	if err != nil {
+		return nil, err
+	}
+	msgBlock, err := b.client.GetBlock(blockhash)
+	if err != nil {
+		return nil, err
+	}
+	return msgBlock, nil
 }

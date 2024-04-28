@@ -192,42 +192,6 @@ func LoadBitcoinConfig(homePath string) (*BitcoinConfig, error) {
 	return &config, nil
 }
 
-// ChainParams get chain params by network name
-func ChainParams(network string) *chaincfg.Params {
-	switch network {
-	case chaincfg.MainNetParams.Name:
-		return &chaincfg.MainNetParams
-	case chaincfg.TestNet3Params.Name:
-		return &chaincfg.TestNet3Params
-	case chaincfg.SigNetParams.Name:
-		return &chaincfg.SigNetParams
-	case chaincfg.SimNetParams.Name:
-		return &chaincfg.SimNetParams
-	case chaincfg.RegressionNetParams.Name:
-		return &chaincfg.RegressionNetParams
-	default:
-		return &chaincfg.TestNet3Params
-	}
-}
-
-func DefaultConfig() *Config {
-	return &Config{
-		RootDir:  "",
-		LogLevel: "info",
-	}
-}
-
-func DefaultBitcoinConfig() *BitcoinConfig {
-	return &BitcoinConfig{
-		EnableIndexer: false,
-		NetworkName:   "mainnet",
-		RPCHost:       "127.0.0.1",
-		RPCUser:       "",
-		RPCPass:       "",
-		RPCPort:       "8332",
-	}
-}
-
 func LoadHTTPConfig(homePath string) (*HTTPConfig, error) {
 	config := HTTPConfig{}
 	configFile := path.Join(homePath, HTTPConfigFileName)
@@ -257,4 +221,40 @@ func LoadHTTPConfig(homePath string) (*HTTPConfig, error) {
 	}
 
 	return &config, nil
+}
+
+// ChainParams get chain params by network name
+func ChainParams(network string) *chaincfg.Params {
+	switch network {
+	case chaincfg.MainNetParams.Name:
+		return &chaincfg.MainNetParams
+	case chaincfg.TestNet3Params.Name:
+		return &chaincfg.TestNet3Params
+	case chaincfg.SigNetParams.Name:
+		return &chaincfg.SigNetParams
+	case chaincfg.SimNetParams.Name:
+		return &chaincfg.SimNetParams
+	case chaincfg.RegressionNetParams.Name:
+		return &chaincfg.RegressionNetParams
+	default:
+		return &chaincfg.TestNet3Params
+	}
+}
+
+func DefaultConfig() *Config {
+	return &Config{
+		RootDir:  "",
+		LogLevel: "info",
+	}
+}
+
+func DefaultBitcoinConfig() *BitcoinConfig {
+	return &BitcoinConfig{
+		EnableIndexer: false,
+		NetworkName:   "testnet3",
+		RPCHost:       "https://bitcoin-testnet.drpc.org",
+		RPCUser:       "",
+		RPCPass:       "",
+		RPCPort:       "",
+	}
 }

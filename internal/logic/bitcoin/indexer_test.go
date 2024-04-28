@@ -1,6 +1,7 @@
 package bitcoin_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/b2network/b2-indexer/internal/config"
@@ -174,8 +175,9 @@ func TestLocalParseTx(t *testing.T) {
 // TestLocalLatestBlock only test in local
 func TestLocalLatestBlock(t *testing.T) {
 	indexer := bitcoinIndexerWithConfig(t, "")
-	_, err := indexer.LatestBlock()
+	block, err := indexer.LatestBlock()
 	require.NoError(t, err)
+	fmt.Printf("%v:%v \n", "latestBlock", block)
 }
 
 // TestLocalBlockChainInfo only test in local
@@ -215,12 +217,20 @@ func mockBitcoinIndexer(t *testing.T, chainParams *chaincfg.Params) *bitcoin.Ind
 func bitcoinIndexerWithConfig(t *testing.T, indexListenAddress string) *bitcoin.Indexer {
 	cfg, err := config.LoadBitcoinConfig("")
 	require.NoError(t, err)
+
+	var host string
+	if len(cfg.RPCPort) > 1 {
+		host = cfg.RPCHost + ":" + cfg.RPCPort
+	} else {
+		host = cfg.RPCHost
+	}
+
 	connCfg := &rpcclient.ConnConfig{
-		Host:         cfg.RPCHost + ":" + cfg.RPCPort,
+		Host:         host,
 		User:         cfg.RPCUser,
 		Pass:         cfg.RPCPass,
 		HTTPPostMode: true,
-		DisableTLS:   true,
+		DisableTLS:   false,
 	}
 	client, err := rpcclient.New(connCfg, nil)
 	require.NoError(t, err)

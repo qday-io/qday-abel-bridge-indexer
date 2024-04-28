@@ -1,0 +1,42 @@
+network-name = "mainnet"
+rpc-host = "docs-demo.btc.quiknode.pro"
+rpc-port = ""
+rpc-user = ""
+rpc-pass = ""
+disable-tls = false
+wallet-name = ""
+enable-indexer = true
+indexer-listen-address = "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo"
+indexer-listen-target-confirmations = 1
+
+[bridge]
+eth-rpc-url = "https://optimism.llamarpc.com"
+eth-priv-key = ""
+contract-address = "0x4200000000000000000000000000000000000007"
+abi = ""
+enable-eoa-transfer = true
+aa-b2-api = ""
+aa-particle-rpc = ""
+aa-particle-project-id = ""
+aa-particle-server-key = ""
+aa-particle-chain-id = 0
+gas-price-multiple = 2
+b2-explorer-url = ""
+enable-withdraw-listener = false
+deposit = ""
+withdraw = ""
+unisat-api-key = ""
+publickeys = []
+time-interval = 0
+multisig-num = 0
+enable-rollup-listener = false
+enable-vsm = false
+vsm-internal-key-index = 0
+vsm-iv = ""
+local-decrypt-key = ""
+local-decrypt-alg = ""
+
+[eps]
+enable-eps = false
+url = ""
+authorization = ""

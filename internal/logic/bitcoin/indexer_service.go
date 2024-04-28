@@ -45,6 +45,42 @@ func NewIndexerService(
 	return is
 }
 
+func (bis *IndexerService) CheckDb() error {
+	if !bis.db.Migrator().HasTable(&model.Deposit{}) {
+		err := bis.db.AutoMigrate(&model.Deposit{})
+		if err != nil {
+			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
+			return err
+		}
+	}
+
+	if !bis.db.Migrator().HasTable(&model.BtcIndex{}) {
+		err := bis.db.AutoMigrate(&model.BtcIndex{})
+		if err != nil {
+			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
+			return err
+		}
+	}
+
+	if !bis.db.Migrator().HasTable(&model.Sinohope{}) {
+		err := bis.db.AutoMigrate(&model.Sinohope{})
+		if err != nil {
+			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
+			return err
+		}
+	}
+
+	if !bis.db.Migrator().HasTable(&model.RollupDeposit{}) {
+		err := bis.db.AutoMigrate(&model.RollupDeposit{})
+		if err != nil {
+			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
+			return err
+		}
+	}
+
+	return nil
+}
+
 // OnStart
 func (bis *IndexerService) OnStart() error {
 	latestBlock, err := bis.txIdxr.LatestBlock()
@@ -57,38 +93,6 @@ func (bis *IndexerService) OnStart() error {
 		currentBlock   int64 // index current block number
 		currentTxIndex int64 // index current block tx index
 	)
-	if !bis.db.Migrator().HasTable(&model.Deposit{}) {
-		err = bis.db.AutoMigrate(&model.Deposit{})
-		if err != nil {
-			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
-			return err
-		}
-	}
-
-	if !bis.db.Migrator().HasTable(&model.BtcIndex{}) {
-		err = bis.db.AutoMigrate(&model.BtcIndex{})
-		if err != nil {
-			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
-			return err
-		}
-	}
-
-	if !bis.db.Migrator().HasTable(&model.Sinohope{}) {
-		err = bis.db.AutoMigrate(&model.Sinohope{})
-		if err != nil {
-			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
-			return err
-		}
-	}
-
-	if !bis.db.Migrator().HasTable(&model.RollupDeposit{}) {
-		err = bis.db.AutoMigrate(&model.RollupDeposit{})
-		if err != nil {
-			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
-			return err
-		}
-	}
-
 	var btcIndex model.BtcIndex
 	if err := bis.db.First(&btcIndex, 1).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

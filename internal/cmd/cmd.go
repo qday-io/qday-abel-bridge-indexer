@@ -6,10 +6,7 @@ import (
 
 	"github.com/b2network/b2-indexer/internal/server"
 	"github.com/b2network/b2-indexer/internal/types"
-	cryptoCmd "github.com/b2network/b2-indexer/pkg/crypto/cmd"
 	"github.com/b2network/b2-indexer/pkg/log"
-	sinohopeCmd "github.com/b2network/b2-indexer/pkg/sinohope/cmd"
-	gvsmCmd "github.com/b2network/b2-indexer/pkg/vsm/cmd"
 	"github.com/spf13/cobra"
 )
 
@@ -40,10 +37,10 @@ func rootCmd() *cobra.Command {
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.AddCommand(startCmd())
-	rootCmd.AddCommand(startHTTPServer())
-	rootCmd.AddCommand(sinohopeCmd.Sinohope())
-	rootCmd.AddCommand(gvsmCmd.Gvsm())
-	rootCmd.AddCommand(cryptoCmd.Crypto())
+	//rootCmd.AddCommand(startHTTPServer())
+	//rootCmd.AddCommand(sinohopeCmd.Sinohope())
+	//rootCmd.AddCommand(gvsmCmd.Gvsm())
+	//rootCmd.AddCommand(cryptoCmd.Crypto())
 	return rootCmd
 }
 
@@ -65,7 +62,7 @@ func startCmd() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().String(FlagHome, "", "The application home directory")
+	cmd.Flags().String(FlagHome, "./", "The application home directory")
 	return cmd
 }
 

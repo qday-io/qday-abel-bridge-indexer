@@ -1,0 +1,42 @@
+network-name = "testnet3"
+rpc-host = "https://bitcoin-testnet.drpc.org"
+rpc-port = ""
+rpc-user = ""
+rpc-pass = ""
+disable-tls = true
+wallet-name = ""
+enable-indexer = true
+indexer-listen-address = "tb1qp60jce0rnf4fl2xg4hve0yfw4qz2m92fj8l2cf"
+indexer-listen-target-confirmations = 1
+
+[bridge]
+eth-rpc-url = ""
+eth-priv-key = ""
+contract-address = ""
+abi = ""
+enable-eoa-transfer = true
+aa-b2-api = ""
+aa-particle-rpc = ""
+aa-particle-project-id = ""
+aa-particle-server-key = ""
+aa-particle-chain-id = 0
+gas-price-multiple = 2
+b2-explorer-url = ""
+enable-withdraw-listener = false
+deposit = ""
+withdraw = ""
+unisat-api-key = ""
+publickeys = []
+time-interval = 0
+multisig-num = 0
+enable-rollup-listener = false
+enable-vsm = false
+vsm-internal-key-index = 0
+vsm-iv = ""
+local-decrypt-key = ""
+local-decrypt-alg = ""
+
+[eps]
+enable-eps = false
+url = ""
+authorization = ""

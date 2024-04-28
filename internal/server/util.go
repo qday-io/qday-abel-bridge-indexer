@@ -70,12 +70,14 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, home string) error {
 	if err != nil {
 		return err
 	}
+
+	//the version no db,next open
 	db, err := NewDB(cfg)
 	if err != nil {
 		return err
 	}
 
-	// set db to context
+	//set db to context
 	ctx := context.WithValue(cmd.Context(), types.DBContextKey, db)
 	cmd.SetContext(ctx)
 

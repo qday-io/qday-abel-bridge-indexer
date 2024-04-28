@@ -56,6 +56,8 @@ func Run(ctx context.Context, cfg *config.HTTPConfig, grpcOpts grpc.ServerOption
 	grpcSvc := grpc.NewServer(grpcOpts)
 	grpcFn(grpcSvc)
 
+	reflection.Register(grpcSvc)
+
 	errChan := make(chan error)
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%v", cfg.HTTPPort),
@@ -78,7 +80,7 @@ func Run(ctx context.Context, cfg *config.HTTPConfig, grpcOpts grpc.ServerOption
 			errChan <- fmt.Errorf("gRPC server error: %v", err)
 		}
 	}()
-	reflection.Register(grpcSvc)
+
 	log.Println("http server started in port", cfg.HTTPPort)
 	log.Println("grpc server started in port", cfg.GrpcPort)
 	for err := range errChan {

@@ -37,7 +37,7 @@ func rootCmd() *cobra.Command {
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.AddCommand(startCmd())
-	//rootCmd.AddCommand(startHTTPServer())
+	rootCmd.AddCommand(startHTTPServer())
 	//rootCmd.AddCommand(sinohopeCmd.Sinohope())
 	//rootCmd.AddCommand(gvsmCmd.Gvsm())
 	//rootCmd.AddCommand(cryptoCmd.Crypto())

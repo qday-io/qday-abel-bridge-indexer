@@ -13,7 +13,7 @@ require (
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.61.0
 	gorm.io/driver/postgres v1.5.6
-	gorm.io/gorm v1.25.7
+	gorm.io/gorm v1.25.10
 )
 
 require (
@@ -34,6 +34,7 @@ require (
 	github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/ethereum/c-kzg-4844 v0.4.0 // indirect
+	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/rs/cors v1.10.1 // indirect
@@ -42,6 +43,7 @@ require (
 	github.com/supranational/blst v0.3.11 // indirect
 	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
+	gorm.io/driver/mysql v1.5.6 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 

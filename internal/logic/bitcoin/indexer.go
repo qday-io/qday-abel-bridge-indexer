@@ -80,6 +80,8 @@ func (b *Indexer) ParseBlock(height int64, txIndex int64) ([]*types.BitcoinTxPar
 		if err != nil {
 			return nil, nil, err
 		}
+		b.logger.Infof("parse block:height=%v,txIndex=%v", height, k)
+
 		if parseTxs != nil {
 			blockParsedResult = append(blockParsedResult, parseTxs)
 		}
@@ -103,34 +105,15 @@ func (b *Indexer) CheckConfirmations(hash string) error {
 
 // parseTx parse transaction data
 func (b *Indexer) parseTx(txResult *wire.MsgTx, index int) (*types.BitcoinTxParseResult, error) {
-	listenAddress := false
-	var totalValue int64
-	tos := make([]types.BitcoinTo, 0)
-	for _, v := range txResult.TxOut {
-		pkAddress, err := b.parseAddress(v.PkScript)
-		if err != nil {
-			if errors.Is(err, ErrParsePkScript) {
-				continue
-			}
-			// null data
-			if errors.Is(err, ErrParsePkScriptNullData) {
-				continue
-			}
-			return nil, err
-		}
-		parseTo := types.BitcoinTo{
-			Address: pkAddress,
-			Value:   v.Value,
-		}
-		tos = append(tos, parseTo)
-		// if pk address eq dest listened address, after parse from address by vin prev tx
-		if pkAddress == b.listenAddress.EncodeAddress() {
-			listenAddress = true
-			totalValue += v.Value
-		}
-	}
+	//listenAddress := false
+	//var totalValue int64
+	//tos := make([]types.BitcoinTo, 0)
+	tos, totalValue, listenAddress, _ := b.parseToAddress(txResult.TxOut)
+
+	listenAddress = true
+
 	if listenAddress {
-		fromAddress, err := b.parseFromAddress(txResult)
+		fromAddress, err := b.parseFromAddress(txResult.TxIn)
 		if err != nil {
 			return nil, fmt.Errorf("vin parse err:%w", err)
 		}
@@ -155,14 +138,48 @@ func (b *Indexer) parseTx(txResult *wire.MsgTx, index int) (*types.BitcoinTxPars
 	}
 	return nil, nil
 }
+func (b *Indexer) parseToAddress(TxOut []*wire.TxOut) (toAddress []types.BitcoinTo, value int64, listenAddress bool, err error) {
+	hasListenAddress := false
+	var totalValue int64
+	tos := make([]types.BitcoinTo, 0)
+
+	for _, v := range TxOut {
+		pkAddress, err := b.parseAddress(v.PkScript)
+		if err != nil {
+			if errors.Is(err, ErrParsePkScript) {
+				continue
+			}
+			// null data
+			if errors.Is(err, ErrParsePkScriptNullData) {
+				continue
+			}
+			return nil, 0, false, err
+		}
+		parseTo := types.BitcoinTo{
+			Address: pkAddress,
+			Value:   v.Value,
+		}
+		tos = append(tos, parseTo)
+		// if pk address eq dest listened address, after parse from address by vin prev tx
+		if pkAddress == b.listenAddress.EncodeAddress() {
+			hasListenAddress = true
+			totalValue += v.Value
+		}
+	}
+
+	return tos, totalValue, hasListenAddress, nil
+}
 
 // parseFromAddress from vin parse from address
 // return all possible values parsed from address
 // TODO: at present, it is assumed that it is a single from, and multiple from needs to be tested later
-func (b *Indexer) parseFromAddress(txResult *wire.MsgTx) (fromAddress []types.BitcoinFrom, err error) {
-	for _, vin := range txResult.TxIn {
+func (b *Indexer) parseFromAddress(TxIn []*wire.TxIn) (fromAddress []types.BitcoinFrom, err error) {
+	for _, vin := range TxIn {
 		// get prev tx hash
 		prevTxID := vin.PreviousOutPoint.Hash
+		if prevTxID.String() == "0000000000000000000000000000000000000000000000000000000000000000" {
+			return nil, nil
+		}
 		vinResult, err := b.GetRawTransaction(&prevTxID)
 		if err != nil {
 			return nil, fmt.Errorf("vin get raw transaction err:%w", err)

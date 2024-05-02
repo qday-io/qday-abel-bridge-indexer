@@ -74,7 +74,7 @@ func Start(ctx *Context, cmd *cobra.Command) (err error) {
 		select {
 		case err := <-errCh:
 			return err
-		case <-time.After(15 * time.Second): // assume server started successfully
+		case <-time.After(10 * time.Second): // assume server started successfully
 		}
 
 		// start l1->l2 bridge service
@@ -85,7 +85,7 @@ func Start(ctx *Context, cmd *cobra.Command) (err error) {
 			return err
 		}
 
-		bridgeService := bitcoin.NewBridgeDepositService(bridge, bidxer, db, bridgeLogger)
+		bridgeService := bitcoin.NewBridgeDepositService(bridge, bidxer, db, bridgeLogger, bitcoinCfg.Bridge)
 		bridgeErrCh := make(chan error)
 		go func() {
 			if err := bridgeService.Start(); err != nil {

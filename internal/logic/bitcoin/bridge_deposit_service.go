@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/b2network/b2-indexer/internal/config"
 	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/log"
@@ -32,7 +33,7 @@ var ErrServerStop = errors.New("server stop")
 // BridgeDepositService l1->l2
 type BridgeDepositService struct {
 	service.BaseService
-
+	bridgeCfg  config.BridgeConfig
 	bridge     types.BITCOINBridge
 	btcIndexer types.BITCOINTxIndexer
 	db         *gorm.DB
@@ -47,12 +48,14 @@ func NewBridgeDepositService(
 	btcIndexer types.BITCOINTxIndexer,
 	db *gorm.DB,
 	logger log.Logger,
+	bridgeCfg config.BridgeConfig,
 ) *BridgeDepositService {
 	is := &BridgeDepositService{
 		bridge:     bridge,
 		btcIndexer: btcIndexer,
 		db:         db,
 		log:        logger,
+		bridgeCfg:  bridgeCfg,
 	}
 	is.BaseService = *service.NewBaseService(nil, BridgeDepositServiceName, is)
 	return is
@@ -74,10 +77,13 @@ func (bis *BridgeDepositService) OnStop() {
 }
 
 func (bis *BridgeDepositService) Deposit() {
-	defer bis.wg.Done()
 	ticker := time.NewTicker(BatchDepositWaitTimeout)
+	defer func() {
+		bis.wg.Done()
+		ticker.Stop()
+	}()
 	for {
-	DEPOSIT:
+		//DEPOSIT:
 		select {
 		case <-bis.stopChan:
 			bis.log.Warnf("deposit stopping...")
@@ -132,7 +138,7 @@ func (bis *BridgeDepositService) Deposit() {
 				).
 				Where(
 					fmt.Sprintf("%s.%s = ?", model.Deposit{}.TableName(), model.Deposit{}.Column().CallbackStatus),
-					model.CallbackStatusSuccess,
+					model.CallbackStatusPending,
 				).
 				Where(
 					fmt.Sprintf("%s.%s = ?", model.Deposit{}.TableName(), model.Deposit{}.Column().ListenerStatus),
@@ -155,9 +161,11 @@ func (bis *BridgeDepositService) Deposit() {
 					if errors.Is(err, ErrServerStop) {
 						return
 					}
-					break DEPOSIT
+					//break DEPOSIT
+					//todo  add feature by vike
+					continue
 				}
-				timeoutTicker := time.NewTicker(HandleDepositTimeout)
+				timeoutTicker := time.NewTimer(HandleDepositTimeout)
 				select {
 				case <-bis.stopChan:
 					bis.log.Warnf("handle deposit stopping...")
@@ -195,9 +203,11 @@ func (bis *BridgeDepositService) Deposit() {
 					if errors.Is(err, ErrServerStop) {
 						return
 					}
-					break DEPOSIT
+					//break DEPOSIT
+					//todo  add feature by vike
+					continue
 				}
-				timeoutTicker := time.NewTicker(HandleDepositTimeout)
+				timeoutTicker := time.NewTimer(HandleDepositTimeout)
 				select {
 				case <-bis.stopChan:
 					bis.log.Warnf("handle aa not found deposit stopping...")
@@ -237,7 +247,7 @@ func (bis *BridgeDepositService) UnconfirmedDeposit() error {
 			return err
 		}
 
-		timeoutTicker := time.NewTicker(HandleDepositTimeout)
+		timeoutTicker := time.NewTimer(HandleDepositTimeout)
 		select {
 		case <-bis.stopChan:
 			bis.log.Warnf("unconfirmed deposit stopping...")
@@ -338,13 +348,13 @@ func (bis *BridgeDepositService) HandleDeposit(deposit model.Deposit, oldTx *eth
 			if err != nil {
 				return err
 			}
-			tryTicker := time.NewTicker(DepositErrTimeout)
-			select {
-			case <-bis.stopChan:
-				return ErrServerStop
-			case <-tryTicker.C:
-				return fmt.Errorf("retry handle deposit")
-			}
+			//tryTicker := time.NewTicker(DepositErrTimeout)
+			//select {
+			//case <-bis.stopChan:
+			//	return ErrServerStop
+			//case <-tryTicker.C:
+			//	return fmt.Errorf("retry handle deposit")
+			//}
 		}
 		dbErr := bis.db.Model(&model.Deposit{}).Where("id = ?", deposit.ID).Updates(map[string]interface{}{
 			model.Deposit{}.Column().B2TxStatus: deposit.B2TxStatus,
@@ -354,6 +364,7 @@ func (bis *BridgeDepositService) HandleDeposit(deposit model.Deposit, oldTx *eth
 		}
 		return err
 	}
+
 	deposit.B2TxStatus = model.DepositB2TxStatusWaitMined
 	deposit.B2TxHash = b2Tx.Hash().String()
 	deposit.BtcFromAAAddress = aaAddress
@@ -486,7 +497,7 @@ func (bis *BridgeDepositService) HandleEoaTransfer() error {
 			return err
 		}
 
-		timeoutTicker := time.NewTicker(HandleDepositTimeout)
+		timeoutTicker := time.NewTimer(HandleDepositTimeout)
 		select {
 		case <-bis.stopChan:
 			bis.log.Warnf("eoaTransfer deposit stopping...")
@@ -605,8 +616,11 @@ func (bis *BridgeDepositService) WaitMined(ctx1 context.Context, b2Tx *ethTypes.
 }
 
 func (bis *BridgeDepositService) CheckDeposit() {
-	defer bis.wg.Done()
 	ticker := time.NewTicker(BatchDepositWaitTimeout)
+	defer func() {
+		bis.wg.Done()
+		ticker.Stop()
+	}()
 	for {
 		select {
 		case <-bis.stopChan:
@@ -636,13 +650,7 @@ func (bis *BridgeDepositService) CheckDeposit() {
 			}
 
 			for _, deposit := range deposits {
-				timeoutTicker := time.NewTicker(2 * time.Minute)
-				select {
-				case <-bis.stopChan:
-					bis.log.Warnf("handle deposit stopping...")
-					return
-				case <-timeoutTicker.C:
-				}
+
 				var rollupDeposit model.RollupDeposit
 				err = bis.db.
 					Where(
@@ -687,6 +695,8 @@ func (bis *BridgeDepositService) CheckDeposit() {
 						bis.log.Errorw("update deposit error", "err", err)
 					}
 				}
+
+				<-time.After(2 * time.Second)
 			}
 		}
 	}
@@ -719,7 +729,7 @@ func (bis *BridgeDepositService) UnconfirmedEoa() error {
 			return err
 		}
 
-		timeoutTicker := time.NewTicker(HandleDepositTimeout)
+		timeoutTicker := time.NewTimer(HandleDepositTimeout)
 		select {
 		case <-bis.stopChan:
 			bis.log.Warnf("unconfirmed eoa deposit stopping...")

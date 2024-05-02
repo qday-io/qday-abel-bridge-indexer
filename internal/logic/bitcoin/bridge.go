@@ -89,14 +89,14 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 		ABI = string(abiFile)
 	}
 
-	newParticle, err := particle.NewParticle(
-		bridgeCfg.AAParticleRPC,
-		bridgeCfg.AAParticleProjectID,
-		bridgeCfg.AAParticleServerKey,
-		bridgeCfg.AAParticleChainID)
-	if err != nil {
-		return nil, err
-	}
+	//newParticle, err := particle.NewParticle(
+	//	bridgeCfg.AAParticleRPC,
+	//	bridgeCfg.AAParticleProjectID,
+	//	bridgeCfg.AAParticleServerKey,
+	//	bridgeCfg.AAParticleChainID)
+	//if err != nil {
+	//	return nil, err
+	//}
 	ethPrivKey := bridgeCfg.EthPrivKey
 	if bridgeCfg.EnableVSM {
 		tassInputData, err := hex.DecodeString(ethPrivKey)
@@ -144,7 +144,7 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 		EthPrivKey:           privateKey,
 		ABI:                  ABI,
 		logger:               log,
-		particle:             newParticle,
+		particle:             nil,
 		bitcoinParam:         bitcoinParam,
 		enableEoaTransfer:    bridgeCfg.EnableEoaTransfer,
 		AAPubKeyAPI:          bridgeCfg.AAB2PI,
@@ -176,8 +176,7 @@ func (b *Bridge) Deposit(
 	if err != nil {
 		return nil, nil, "", "", fmt.Errorf("btc address to eth address err:%w", err)
 	}
-
-	data, err := b.ABIPack(b.ABI, "deposit", common.HexToHash(hash), common.HexToAddress(toAddress), new(big.Int).SetInt64(amount))
+	data, err := b.ABIPack(b.ABI, "depositV2", common.HexToHash(hash), common.HexToAddress(toAddress), new(big.Int).SetInt64(amount))
 	if err != nil {
 		return nil, nil, toAddress, "", fmt.Errorf("abi pack err:%w", err)
 	}
@@ -302,6 +301,7 @@ func (b *Bridge) sendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey
 	b.logger.Infof("gas price:%v", actualGasPrice.String())
 	b.logger.Infof("nonce:%v", nonce)
 	b.logger.Infof("from address:%v", fromAddress)
+	b.logger.Infof("to address:%v", toAddress.Hex())
 	callMsg := ethereum.CallMsg{
 		From:     fromAddress,
 		To:       &toAddress,
@@ -479,30 +479,32 @@ func (b *Bridge) ABIPack(abiData string, method string, args ...interface{}) ([]
 
 // BitcoinAddressToEthAddress bitcoin address to eth address
 func (b *Bridge) BitcoinAddressToEthAddress(bitcoinAddress b2types.BitcoinFrom) (string, error) {
-	pubkeyResp, err := aa.GetPubKey(b.AAPubKeyAPI, bitcoinAddress.Address)
+	pubKeyResp, err := aa.GetPubKey(b.AAPubKeyAPI, bitcoinAddress.Address, b.bitcoinParam.Name)
 	if err != nil {
-		b.logger.Errorw("get pub key:", "pubkey", pubkeyResp, "address", bitcoinAddress.Address)
+		b.logger.Errorw("get pub key:", "pubKeyResp", pubKeyResp, "address", bitcoinAddress.Address)
 		return "", err
 	}
-	if pubkeyResp.Code != "0" {
-		if pubkeyResp.Code == aa.AddressNotFoundErrCode {
-			return "", ErrAAAddressNotFound
-		}
-		return "", fmt.Errorf("get pubkey code err:%v", pubkeyResp)
-	}
+	//if pubkeyResp.Code != "0" {
+	//	if pubkeyResp.Code == aa.AddressNotFoundErrCode {
+	//		return "", ErrAAAddressNotFound
+	//	}
+	//	return "", fmt.Errorf("get pubkey code err:%v", pubkeyResp)
+	//}
+	//
+	//b.logger.Infow("get pub key:", "pubkey", pubkeyResp, "address", bitcoinAddress.Address)
+	//aaBtcAccount, err := b.particle.AAGetBTCAccount([]string{pubkeyResp.Data.Pubkey})
+	//if err != nil {
+	//	return "", err
+	//}
+	//
+	//if len(aaBtcAccount.Result) != 1 {
+	//	b.logger.Errorw("AAGetBTCAccount", "result", aaBtcAccount)
+	//	return "", fmt.Errorf("AAGetBTCAccount result not match")
+	//}
+	//b.logger.Infow("AAGetBTCAccount", "result", aaBtcAccount.Result[0])
+	//return aaBtcAccount.Result[0].SmartAccountAddress, nil
 
-	b.logger.Infow("get pub key:", "pubkey", pubkeyResp, "address", bitcoinAddress.Address)
-	aaBtcAccount, err := b.particle.AAGetBTCAccount([]string{pubkeyResp.Data.Pubkey})
-	if err != nil {
-		return "", err
-	}
-
-	if len(aaBtcAccount.Result) != 1 {
-		b.logger.Errorw("AAGetBTCAccount", "result", aaBtcAccount)
-		return "", fmt.Errorf("AAGetBTCAccount result not match")
-	}
-	b.logger.Infow("AAGetBTCAccount", "result", aaBtcAccount.Result[0])
-	return aaBtcAccount.Result[0].SmartAccountAddress, nil
+	return pubKeyResp.Data.Pubkey, nil
 }
 
 // WaitMined wait tx mined

@@ -1,4 +1,4 @@
-package bitcoin
+package indexer
 
 import (
 	"encoding/json"
@@ -21,6 +21,20 @@ const (
 
 	IndexTxTimeout    = 100 * time.Millisecond
 	IndexBlockTimeout = 2 * time.Second
+)
+
+var (
+	ErrParsePkScript         = errors.New("parse pkscript err")
+	ErrDecodeListenAddress   = errors.New("decode listen address err")
+	ErrTargetConfirmations   = errors.New("target confirmation number was not reached")
+	ErrParsePubKey           = errors.New("parse pubkey failed, not found pubkey or nonsupport ")
+	ErrParsePkScriptNullData = errors.New("parse pkscript null data err")
+)
+
+const (
+	// tx type
+	TxTypeTransfer = "transfer" // btc transfer
+	TxTypeWithdraw = "withdraw" // btc withdraw
 )
 
 // IndexerService indexes transactions for json-rpc service.
@@ -117,14 +131,14 @@ func (bis *IndexerService) OnStart() error {
 	currentBlock = btcIndex.BtcIndexBlock
 	currentTxIndex = btcIndex.BtcIndexTx
 
-	ticker := time.NewTicker(NewBlockWaitTimeout)
+	//ticker := time.NewTicker(NewBlockWaitTimeout)
 	for {
 		bis.log.Infow("bitcoin indexer", "latestBlock",
 			latestBlock, "currentBlock", currentBlock, "currentTxIndex", currentTxIndex)
 
 		if latestBlock <= currentBlock {
-			<-ticker.C
-			ticker.Reset(NewBlockWaitTimeout)
+			//<-ticker.C
+			<-time.After(NewBlockWaitTimeout)
 
 			// update latest block
 			latestBlock, err = bis.txIdxr.LatestBlock()
@@ -252,7 +266,7 @@ func (bis *IndexerService) SaveParsedResult(
 				BtcBlockTime:   btcBlockTime,
 				B2TxRetry:      0,
 				ListenerStatus: model.ListenerStatusSuccess,
-				CallbackStatus: model.CallbackStatusPending,
+				CallbackStatus: model.CallbackStatusSuccess,
 			}
 			err = tx.Create(&deposit).Error
 			if err != nil {

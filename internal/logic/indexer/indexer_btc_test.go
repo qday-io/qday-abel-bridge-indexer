@@ -1,11 +1,11 @@
-package bitcoin_test
+package indexer_test
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/b2network/b2-indexer/internal/config"
-	"github.com/b2network/b2-indexer/internal/logic/bitcoin"
+	"github.com/b2network/b2-indexer/internal/logic/indexer"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 
@@ -59,7 +59,7 @@ func TestNewBitcoinIndexer(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		_, err := bitcoin.NewBitcoinIndexer(
+		_, err := indexer.NewBitcoinIndexer(
 			log.NewNopLogger(),
 			mockRpcClient(t),
 			&chaincfg.MainNetParams, // chainParams Do not affect the address
@@ -202,9 +202,9 @@ func mockRpcClient(t *testing.T) *rpcclient.Client {
 	return client
 }
 
-func mockBitcoinIndexer(t *testing.T, chainParams *chaincfg.Params) *bitcoin.Indexer {
+func mockBitcoinIndexer(t *testing.T, chainParams *chaincfg.Params) *indexer.BtcIndexer {
 	cfg, err := config.LoadBitcoinConfig("../../config/testdata")
-	indexer, err := bitcoin.NewBitcoinIndexer(
+	indexer, err := indexer.NewBitcoinIndexer(
 		log.NewNopLogger(),
 		mockRpcClient(t),
 		chainParams,
@@ -214,7 +214,7 @@ func mockBitcoinIndexer(t *testing.T, chainParams *chaincfg.Params) *bitcoin.Ind
 	return indexer
 }
 
-func bitcoinIndexerWithConfig(t *testing.T, indexListenAddress string) *bitcoin.Indexer {
+func bitcoinIndexerWithConfig(t *testing.T, indexListenAddress string) *indexer.BtcIndexer {
 	cfg, err := config.LoadBitcoinConfig("")
 	require.NoError(t, err)
 
@@ -238,7 +238,7 @@ func bitcoinIndexerWithConfig(t *testing.T, indexListenAddress string) *bitcoin.
 	if indexListenAddress == "" {
 		indexListenAddress = cfg.IndexerListenAddress
 	}
-	indexer, err := bitcoin.NewBitcoinIndexer(
+	indexer, err := indexer.NewBitcoinIndexer(
 		log.NewNopLogger(),
 		client,
 		bitcoinParam,

@@ -1,4 +1,4 @@
-package bitcoin
+package indexer
 
 import (
 	"context"
@@ -138,7 +138,7 @@ func (bis *BridgeDepositService) Deposit() {
 				).
 				Where(
 					fmt.Sprintf("%s.%s = ?", model.Deposit{}.TableName(), model.Deposit{}.Column().CallbackStatus),
-					model.CallbackStatusPending,
+					model.CallbackStatusSuccess,
 				).
 				Where(
 					fmt.Sprintf("%s.%s = ?", model.Deposit{}.TableName(), model.Deposit{}.Column().ListenerStatus),

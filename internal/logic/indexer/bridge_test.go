@@ -1,4 +1,4 @@
-package bitcoin_test
+package indexer_test
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/b2network/b2-indexer/internal/config"
-	"github.com/b2network/b2-indexer/internal/logic/bitcoin"
+	"github.com/b2network/b2-indexer/internal/logic/indexer"
 	b2types "github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -57,7 +57,7 @@ func TestNewBridge(t *testing.T) {
 		AAParticleChainID:   1102,
 	}
 
-	bridge, err := bitcoin.NewBridge(bridgeCfg, abiPath, log.NewNopLogger(), &chaincfg.TestNet3Params)
+	bridge, err := indexer.NewBridge(bridgeCfg, abiPath, log.NewNopLogger(), &chaincfg.TestNet3Params)
 	assert.NoError(t, err)
 	assert.NotNil(t, bridge)
 	assert.Equal(t, bridgeCfg.EthRPCURL, bridge.EthRPCURL)
@@ -159,7 +159,7 @@ func TestABIPack(t *testing.T) {
 		}
 
 		// Create a mock bridge object
-		b := &bitcoin.Bridge{}
+		b := &indexer.Bridge{}
 
 		// Call the ABIPack method
 		result, err := b.ABIPack(string(abiData), expectedMethod, expectedArgs...)
@@ -177,7 +177,7 @@ func TestABIPack(t *testing.T) {
 		expectedError := errors.New("unexpected EOF")
 
 		// Create a mock bridge object
-		b := &bitcoin.Bridge{}
+		b := &indexer.Bridge{}
 
 		// Call the ABIPack method
 		_, err := b.ABIPack(abiData, "method", "arg1", "arg2")
@@ -186,10 +186,10 @@ func TestABIPack(t *testing.T) {
 	})
 }
 
-func bridgeWithConfig(t *testing.T) *bitcoin.Bridge {
+func bridgeWithConfig(t *testing.T) *indexer.Bridge {
 	config, err := config.LoadBitcoinConfig("")
 	require.NoError(t, err)
-	bridge, err := bitcoin.NewBridge(config.Bridge, "./", log.NewNopLogger(), &chaincfg.TestNet3Params)
+	bridge, err := indexer.NewBridge(config.Bridge, "./", log.NewNopLogger(), &chaincfg.TestNet3Params)
 	require.NoError(t, err)
 	return bridge
 }
@@ -226,13 +226,13 @@ func TestLocalDepositWaitMined(t *testing.T) {
 	// uuid check
 	_, _, _, _, err = bridge.Deposit(uuid, address, int64(value), nil, 0, false)
 	if err != nil {
-		assert.EqualError(t, bitcoin.ErrBridgeDepositTxHashExist, err.Error())
+		assert.EqualError(t, indexer.ErrBridgeDepositTxHashExist, err.Error())
 	}
 
 	// insufficient balance
 	_, _, _, _, err = bridge.Deposit(randHash(t), address, int64(bigValue), nil, 0, false)
 	if err != nil {
-		assert.EqualError(t, bitcoin.ErrBridgeDepositContractInsufficientBalance, err.Error())
+		assert.EqualError(t, indexer.ErrBridgeDepositContractInsufficientBalance, err.Error())
 	} else {
 		t.Fatal("insufficient balance check failed")
 	}
@@ -288,7 +288,7 @@ func TestLocalBatchRestNonce(t *testing.T) {
 	// config.Bridge.GasPriceMultiple = 3
 	// config.Bridge.EthRPCURL = ""
 	// config.Bridge.EthPrivKey = ""
-	bridge, err := bitcoin.NewBridge(config.Bridge, "./", log.NewNopLogger(), &chaincfg.TestNet3Params)
+	bridge, err := indexer.NewBridge(config.Bridge, "./", log.NewNopLogger(), &chaincfg.TestNet3Params)
 	privateKey, err := crypto.HexToECDSA(config.Bridge.EthPrivKey)
 	require.NoError(t, err)
 	ctx := context.Background()

@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/b2network/b2-indexer/internal/server"
+	"github.com/b2network/b2-indexer/internal/handler"
 	"github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/spf13/cobra"
@@ -30,21 +30,21 @@ func rootCmd() *cobra.Command {
 		Long:  "b2-indexer is a application that index bitcoin tx",
 		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 			ctx := context.Background()
-			ctx = context.WithValue(ctx, types.ServerContextKey, server.NewDefaultContext())
+			ctx = context.WithValue(ctx, types.ServerContextKey, handler.NewDefaultContext())
 			cmd.SetContext(ctx)
 		},
 	}
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
-	rootCmd.AddCommand(startCmd())
-	rootCmd.AddCommand(startHTTPServer())
+	rootCmd.AddCommand(buildIndexCmd())
+	rootCmd.AddCommand(buildHttpCmd())
 	//rootCmd.AddCommand(sinohopeCmd.Sinohope())
 	//rootCmd.AddCommand(gvsmCmd.Gvsm())
 	//rootCmd.AddCommand(cryptoCmd.Crypto())
 	return rootCmd
 }
 
-func startCmd() *cobra.Command {
+func buildIndexCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "start index tx service",
@@ -53,10 +53,10 @@ func startCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return server.InterceptConfigsPreRunHandler(cmd, home)
+			return handler.InterceptConfigsPreRunHandler(cmd, home)
 		},
 		Run: func(cmd *cobra.Command, _ []string) {
-			err := server.Start(GetServerContextFromCmd(cmd), cmd)
+			err := handler.HandleIndexCmd(GetServerContextFromCmd(cmd), cmd)
 			if err != nil {
 				log.Error("start index tx service failed")
 			}
@@ -68,16 +68,16 @@ func startCmd() *cobra.Command {
 
 // GetServerContextFromCmd returns a Context from a command or an empty Context
 // if it has not been set.
-func GetServerContextFromCmd(cmd *cobra.Command) *server.Context {
+func GetServerContextFromCmd(cmd *cobra.Command) *handler.Context {
 	if v := cmd.Context().Value(types.ServerContextKey); v != nil {
-		serverCtxPtr := v.(*server.Context)
+		serverCtxPtr := v.(*handler.Context)
 		return serverCtxPtr
 	}
 
-	return server.NewDefaultContext()
+	return handler.NewDefaultContext()
 }
 
-func startHTTPServer() *cobra.Command {
+func buildHttpCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "http",
 		Short: "start http service",
@@ -86,15 +86,15 @@ func startHTTPServer() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return server.HTTPConfigsPreRunHandler(cmd, home)
+			return handler.HTTPConfigsPreRunHandler(cmd, home)
 		},
 		Run: func(cmd *cobra.Command, _ []string) {
-			db, err := server.GetDBContextFromCmd(cmd)
+			db, err := handler.GetDBContextFromCmd(cmd)
 			if err != nil {
 				cmd.Println(err)
 				return
 			}
-			err = server.Run(cmd.Context(), GetServerContextFromCmd(cmd), db)
+			err = handler.Run(cmd.Context(), GetServerContextFromCmd(cmd), db)
 			if err != nil {
 				log.Error("start http service failed")
 			}

@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/b2network/b2-indexer/internal/server"
+	"github.com/b2network/b2-indexer/internal/handler"
 	"github.com/b2network/b2-indexer/internal/types"
 )
 
 func Test_startCmd(t *testing.T) {
-	cmd := startCmd()
+	cmd := buildIndexCmd()
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, types.ServerContextKey, server.NewDefaultContext())
+	ctx = context.WithValue(ctx, types.ServerContextKey, handler.NewDefaultContext())
 	cmd.SetContext(ctx)
 	err := cmd.Execute()
 	if err != nil {
@@ -20,5 +20,5 @@ func Test_startCmd(t *testing.T) {
 }
 
 func Test_startHTTPServer(t *testing.T) {
-	startHTTPServer()
+	buildHttpCmd()
 }

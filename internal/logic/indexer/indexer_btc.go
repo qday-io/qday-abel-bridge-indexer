@@ -1,4 +1,4 @@
-package bitcoin
+package indexer
 
 import (
 	"errors"
@@ -15,22 +15,8 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-var (
-	ErrParsePkScript         = errors.New("parse pkscript err")
-	ErrDecodeListenAddress   = errors.New("decode listen address err")
-	ErrTargetConfirmations   = errors.New("target confirmation number was not reached")
-	ErrParsePubKey           = errors.New("parse pubkey failed, not found pubkey or nonsupport ")
-	ErrParsePkScriptNullData = errors.New("parse pkscript null data err")
-)
-
-const (
-	// tx type
-	TxTypeTransfer = "transfer" // btc transfer
-	TxTypeWithdraw = "withdraw" // btc withdraw
-)
-
-// Indexer bitcoin indexer, parse and forward data
-type Indexer struct {
+// BtcIndexer bitcoin indexer, parse and forward data
+type BtcIndexer struct {
 	client              *rpcclient.Client // call bitcoin rpc client
 	chainParams         *chaincfg.Params  // bitcoin network params, e.g. mainnet, testnet, etc.
 	listenAddress       btcutil.Address   // need listened bitcoin address
@@ -45,13 +31,13 @@ func NewBitcoinIndexer(
 	chainParams *chaincfg.Params,
 	listenAddress string,
 	targetConfirmations uint64,
-) (*Indexer, error) {
+) (types.BITCOINTxIndexer, error) {
 	// check listenAddress
 	address, err := btcutil.DecodeAddress(listenAddress, chainParams)
 	if err != nil {
 		return nil, fmt.Errorf("%w:%s", ErrDecodeListenAddress, err.Error())
 	}
-	return &Indexer{
+	return &BtcIndexer{
 		logger:              log,
 		client:              client,
 		chainParams:         chainParams,
@@ -62,7 +48,7 @@ func NewBitcoinIndexer(
 
 // ParseBlock parse block data by block height
 // NOTE: Currently, only transfer transactions are supported.
-func (b *Indexer) ParseBlock(height int64, txIndex int64) ([]*types.BitcoinTxParseResult, *wire.BlockHeader, error) {
+func (b *BtcIndexer) ParseBlock(height int64, txIndex int64) ([]*types.BitcoinTxParseResult, *wire.BlockHeader, error) {
 	blockResult, err := b.GetBlockByHeight(height)
 	if err != nil {
 		return nil, nil, err
@@ -90,7 +76,7 @@ func (b *Indexer) ParseBlock(height int64, txIndex int64) ([]*types.BitcoinTxPar
 	return blockParsedResult, &blockResult.Header, nil
 }
 
-func (b *Indexer) CheckConfirmations(hash string) error {
+func (b *BtcIndexer) CheckConfirmations(hash string) error {
 	txVerbose, err := b.GetRawTransactionVerbose(hash)
 	if err != nil {
 		return err
@@ -104,14 +90,11 @@ func (b *Indexer) CheckConfirmations(hash string) error {
 }
 
 // parseTx parse transaction data
-func (b *Indexer) parseTx(txResult *wire.MsgTx, index int) (*types.BitcoinTxParseResult, error) {
+func (b *BtcIndexer) parseTx(txResult *wire.MsgTx, index int) (*types.BitcoinTxParseResult, error) {
 	//listenAddress := false
 	//var totalValue int64
 	//tos := make([]types.BitcoinTo, 0)
 	tos, totalValue, listenAddress, _ := b.parseToAddress(txResult.TxOut)
-
-	listenAddress = true
-
 	if listenAddress {
 		fromAddress, err := b.parseFromAddress(txResult.TxIn)
 		if err != nil {
@@ -138,7 +121,7 @@ func (b *Indexer) parseTx(txResult *wire.MsgTx, index int) (*types.BitcoinTxPars
 	}
 	return nil, nil
 }
-func (b *Indexer) parseToAddress(TxOut []*wire.TxOut) (toAddress []types.BitcoinTo, value int64, listenAddress bool, err error) {
+func (b *BtcIndexer) parseToAddress(TxOut []*wire.TxOut) (toAddress []types.BitcoinTo, value int64, listenAddress bool, err error) {
 	hasListenAddress := false
 	var totalValue int64
 	tos := make([]types.BitcoinTo, 0)
@@ -173,7 +156,7 @@ func (b *Indexer) parseToAddress(TxOut []*wire.TxOut) (toAddress []types.Bitcoin
 // parseFromAddress from vin parse from address
 // return all possible values parsed from address
 // TODO: at present, it is assumed that it is a single from, and multiple from needs to be tested later
-func (b *Indexer) parseFromAddress(TxIn []*wire.TxIn) (fromAddress []types.BitcoinFrom, err error) {
+func (b *BtcIndexer) parseFromAddress(TxIn []*wire.TxIn) (fromAddress []types.BitcoinFrom, err error) {
 	for _, vin := range TxIn {
 		// get prev tx hash
 		prevTxID := vin.PreviousOutPoint.Hash
@@ -206,14 +189,14 @@ func (b *Indexer) parseFromAddress(TxIn []*wire.TxIn) (fromAddress []types.Bitco
 }
 
 // parseAddress from pkscript parse address
-func (b *Indexer) ParseAddress(pkScript []byte) (string, error) {
+func (b *BtcIndexer) ParseAddress(pkScript []byte) (string, error) {
 	return b.parseAddress(pkScript)
 }
 
 // parseNullData from pkscript parse null data
 //
 //lint:ignore U1000 Ignore unused function temporarily for debugging
-func (b *Indexer) parseNullData(pkScript []byte) (string, error) {
+func (b *BtcIndexer) parseNullData(pkScript []byte) (string, error) {
 	pk, err := txscript.ParsePkScript(pkScript)
 	if err != nil {
 		return "", fmt.Errorf("%w:%s", ErrParsePkScript, err.Error())
@@ -225,7 +208,7 @@ func (b *Indexer) parseNullData(pkScript []byte) (string, error) {
 }
 
 // parseAddress from pkscript parse address
-func (b *Indexer) parseAddress(pkScript []byte) (string, error) {
+func (b *BtcIndexer) parseAddress(pkScript []byte) (string, error) {
 	pk, err := txscript.ParsePkScript(pkScript)
 	if err != nil {
 		return "", fmt.Errorf("%w:%s", ErrParsePkScript, err.Error())
@@ -244,16 +227,16 @@ func (b *Indexer) parseAddress(pkScript []byte) (string, error) {
 }
 
 // LatestBlock get latest block height in the longest block chain.
-func (b *Indexer) LatestBlock() (int64, error) {
+func (b *BtcIndexer) LatestBlock() (int64, error) {
 	return b.client.GetBlockCount()
 }
 
 // BlockChainInfo get block chain info
-func (b *Indexer) BlockChainInfo() (*btcjson.GetBlockChainInfoResult, error) {
+func (b *BtcIndexer) BlockChainInfo() (*btcjson.GetBlockChainInfoResult, error) {
 	return b.client.GetBlockChainInfo()
 }
 
-func (b *Indexer) GetRawTransactionVerbose(hash string) (*btcjson.TxRawResult, error) {
+func (b *BtcIndexer) GetRawTransactionVerbose(hash string) (*btcjson.TxRawResult, error) {
 	txHash, err := chainhash.NewHashFromStr(hash)
 	if err != nil {
 		return nil, err
@@ -265,12 +248,12 @@ func (b *Indexer) GetRawTransactionVerbose(hash string) (*btcjson.TxRawResult, e
 	return txVerbose, nil
 }
 
-func (b *Indexer) GetRawTransaction(txHash *chainhash.Hash) (*btcutil.Tx, error) {
+func (b *BtcIndexer) GetRawTransaction(txHash *chainhash.Hash) (*btcutil.Tx, error) {
 	return b.client.GetRawTransaction(txHash)
 }
 
 // GetBlockByHeight returns a raw block from the server given its height
-func (b *Indexer) GetBlockByHeight(height int64) (*wire.MsgBlock, error) {
+func (b *BtcIndexer) GetBlockByHeight(height int64) (*wire.MsgBlock, error) {
 	blockhash, err := b.client.GetBlockHash(height)
 	if err != nil {
 		return nil, err

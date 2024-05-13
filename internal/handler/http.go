@@ -6,13 +6,14 @@ import (
 
 	"github.com/b2network/b2-indexer/internal/app/service"
 	"github.com/b2network/b2-indexer/internal/config"
+	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/grpc"
 	googleGrpc "google.golang.org/grpc"
 	"gorm.io/gorm"
 )
 
-func Run(ctx context.Context, serverCtx *Context, db *gorm.DB) (err error) {
+func Run(ctx context.Context, serverCtx *model.Context, db *gorm.DB) (err error) {
 	if serverCtx.BitcoinConfig.IndexerListenAddress == "" {
 		log.Panic("listen address empty")
 	}

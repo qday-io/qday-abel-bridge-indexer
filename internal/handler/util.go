@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/b2network/b2-indexer/internal/config"
+	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
 	logger "github.com/b2network/b2-indexer/pkg/log"
 	"github.com/spf13/cobra"
@@ -24,16 +25,6 @@ import (
 // 	DBContextKey     = serverContext("db.context")
 // )
 
-// server context
-type Context struct {
-	// Viper         *viper.Viper
-	Config        *config.Config
-	BitcoinConfig *config.BitcoinConfig
-	HTTPConfig    *config.HTTPConfig
-	// Logger        logger.Logger
-	// Db *gorm.DB
-}
-
 // ErrorCode contains the exit code for server exit.
 type ErrorCode struct {
 	Code int
@@ -43,15 +34,15 @@ func (e ErrorCode) Error() string {
 	return strconv.Itoa(e.Code)
 }
 
-func NewDefaultContext() *Context {
+func NewDefaultContext() *model.Context {
 	return NewContext(
 		config.DefaultConfig(),
 		config.DefaultBitcoinConfig(),
 	)
 }
 
-func NewContext(cfg *config.Config, btcCfg *config.BitcoinConfig) *Context {
-	return &Context{
+func NewContext(cfg *config.Config, btcCfg *config.BitcoinConfig) *model.Context {
+	return &model.Context{
 		Config:        cfg,
 		BitcoinConfig: btcCfg,
 	}
@@ -88,9 +79,9 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, home string) error {
 
 // GetServerContextFromCmd returns a Context from a command or an empty Context
 // if it has not been set.
-func GetServerContextFromCmd(cmd *cobra.Command) *Context {
+func GetServerContextFromCmd(cmd *cobra.Command) *model.Context {
 	if v := cmd.Context().Value(types.ServerContextKey); v != nil {
-		serverCtxPtr := v.(*Context)
+		serverCtxPtr := v.(*model.Context)
 		return serverCtxPtr
 	}
 
@@ -98,13 +89,13 @@ func GetServerContextFromCmd(cmd *cobra.Command) *Context {
 }
 
 // SetCmdServerContext sets a command's Context value to the provided argument.
-func SetCmdServerContext(cmd *cobra.Command, serverCtx *Context) error {
+func SetCmdServerContext(cmd *cobra.Command, serverCtx *model.Context) error {
 	v := cmd.Context().Value(types.ServerContextKey)
 	if v == nil {
 		return errors.New("server context not set")
 	}
 
-	serverCtxPtr := v.(*Context)
+	serverCtxPtr := v.(*model.Context)
 	*serverCtxPtr = *serverCtx
 
 	return nil
@@ -131,8 +122,8 @@ func NewDB(cfg *config.Config) (*gorm.DB, error) {
 	return DB, nil
 }
 
-func NewHTTPContext(httpCfg *config.HTTPConfig, bitcoinCfg *config.BitcoinConfig) *Context {
-	return &Context{
+func NewHTTPContext(httpCfg *config.HTTPConfig, bitcoinCfg *config.BitcoinConfig) *model.Context {
+	return &model.Context{
 		HTTPConfig:    httpCfg,
 		BitcoinConfig: bitcoinCfg,
 	}

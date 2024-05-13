@@ -22,6 +22,11 @@ type BITCOINTxIndexer interface {
 	GetBlockByHeight(height int64) (*wire.MsgBlock, error)
 }
 
+type TxIndexer interface {
+	BITCOINTxIndexer
+	Stop()
+}
+
 type BitcoinTxParseResult struct {
 	// from is l2 user address, by parse bitcoin get the address
 	From []BitcoinFrom

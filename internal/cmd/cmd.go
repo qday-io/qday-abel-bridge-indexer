@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/b2network/b2-indexer/internal/handler"
+	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/spf13/cobra"
@@ -68,9 +69,9 @@ func buildIndexCmd() *cobra.Command {
 
 // GetServerContextFromCmd returns a Context from a command or an empty Context
 // if it has not been set.
-func GetServerContextFromCmd(cmd *cobra.Command) *handler.Context {
+func GetServerContextFromCmd(cmd *cobra.Command) *model.Context {
 	if v := cmd.Context().Value(types.ServerContextKey); v != nil {
-		serverCtxPtr := v.(*handler.Context)
+		serverCtxPtr := v.(*model.Context)
 		return serverCtxPtr
 	}
 

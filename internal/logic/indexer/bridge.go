@@ -5,11 +5,9 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -32,7 +30,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/go-resty/resty/v2"
 )
 
 var (
@@ -254,6 +251,7 @@ func (b *Bridge) sendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey
 		return nil, err
 	}
 	fromAddress := crypto.PubkeyToAddress(fromPriv.PublicKey)
+
 	nonce, err := client.PendingNonceAt(ctx, fromAddress)
 	if err != nil {
 		return nil, err
@@ -273,27 +271,10 @@ func (b *Bridge) sendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey
 		}
 		nonce = oldNonce
 	}
+
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
 		return nil, err
-	}
-	// TODO: temp fix
-	// first use b2 explorer stats gas price
-	// if fail, use base gas price
-	newGasPrice, err := b.gasPrices()
-	if err != nil {
-		b.logger.Errorf("get price err:%v", err.Error())
-		if b.BaseGasPriceMultiple != 0 {
-			gasPrice.Mul(gasPrice, big.NewInt(b.BaseGasPriceMultiple))
-		}
-	} else {
-		if newGasPrice.Cmp(big.NewInt(0)) == 0 {
-			if b.BaseGasPriceMultiple != 0 {
-				gasPrice.Mul(gasPrice, big.NewInt(b.BaseGasPriceMultiple))
-			}
-		} else {
-			gasPrice = newGasPrice
-		}
 	}
 
 	actualGasPrice := new(big.Int).Set(gasPrice)
@@ -553,31 +534,6 @@ func (b *Bridge) TransactionByHash(hash string) (*types.Transaction, bool, error
 
 func (b *Bridge) EnableEoaTransfer() bool {
 	return b.enableEoaTransfer
-}
-
-func (b *Bridge) gasPrices() (*big.Int, error) {
-	client := resty.New()
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		Get(b.B2ExplorerURL + "/api/v2/stats")
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("get gas price error, status code: %d", resp.StatusCode())
-	}
-
-	stats := &B2ExplorerStatus{}
-
-	b.logger.Infof("b2 explorer status:%v", string(resp.Body()))
-	err = json.Unmarshal(resp.Body(), stats)
-	if err != nil {
-		return nil, err
-	}
-	gasPriceWei := new(big.Float).Mul(big.NewFloat(stats.GasPrices.Average), big.NewFloat(1e9))
-	gasPriceInt := new(big.Int)
-	gasPriceWei.Int(gasPriceInt)
-	return gasPriceInt, nil
 }
 
 func (b *Bridge) FromAddress() string {

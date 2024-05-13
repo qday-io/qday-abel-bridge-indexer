@@ -11,14 +11,14 @@ import (
 
 	"github.com/b2network/b2-indexer/internal/config"
 	"github.com/b2network/b2-indexer/internal/logic/indexer"
+	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
 	logger "github.com/b2network/b2-indexer/pkg/log"
-	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
 )
 
-func HandleIndexCmd(ctx *Context, cmd *cobra.Command) (err error) {
+func HandleIndexCmd(ctx *model.Context, cmd *cobra.Command) (err error) {
 	//home := ctx.Config.RootDir
 	bitcoinCfg := ctx.BitcoinConfig
 	context, cancel := osContext.WithCancel(osContext.Background())
@@ -57,36 +57,23 @@ func HandleIndexCmd(ctx *Context, cmd *cobra.Command) (err error) {
 	return nil
 }
 
-func runIndexerService(ctx *Context, cmd *cobra.Command, context osContext.Context) error {
+func runIndexerService(ctx *model.Context, cmd *cobra.Command, context osContext.Context) error {
 	//home := ctx.Config.RootDir
 	bitcoinCfg := ctx.BitcoinConfig
 	logger.Infow("bitcoin index service starting!!!")
-	bclient, err := rpcclient.New(&rpcclient.ConnConfig{
-		Host:         bitcoinCfg.RPCHost + ":" + bitcoinCfg.RPCPort,
-		User:         bitcoinCfg.RPCUser,
-		Pass:         bitcoinCfg.RPCPass,
-		HTTPPostMode: true,                  // Bitcoin core only supports HTTP POST mode
-		DisableTLS:   bitcoinCfg.DisableTLS, // Bitcoin core does not provide TLS by default
-	}, nil)
-	if err != nil {
-		logger.Errorw("failed to create bitcoin client", "error", err.Error())
-		return err
-	}
-	defer func() {
-		bclient.Shutdown()
-	}()
 
-	//errCh := make(chan error)
-	var bidxer types.BITCOINTxIndexer
 	bitcoinParam := config.ChainParams(bitcoinCfg.NetworkName)
 	bidxLogger := newLogger(ctx, "[bitcoin-indexer]")
-	bidxer, err = indexer.NewBitcoinIndexer(bidxLogger, bclient, bitcoinParam, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
-	//bidxer, err = indexer.NewAbelianIndexer(bidxLogger, bclient, bitcoinParam, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
-
+	bidxer, err := indexer.NewBitcoinIndexer(bidxLogger, ctx, bitcoinParam, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
+	//bidxer, err = indexer.NewAbelianIndexer(bidxLogger, ctx, bitcoinParam, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
 	if err != nil {
 		logger.Errorw("failed to new bitcoin indexer indexer", "error", err.Error())
 		return err
 	}
+
+	defer func() {
+		bidxer.Stop()
+	}()
 
 	//go func() {
 	err = startIndexProvider(bidxer, bidxLogger, cmd)
@@ -113,7 +100,7 @@ func runIndexerService(ctx *Context, cmd *cobra.Command, context osContext.Conte
 	return nil
 }
 
-func startBridgeProvider(ctx *Context, bitcoinCfg *config.BitcoinConfig, context osContext.Context, bidxer types.BITCOINTxIndexer, cmd *cobra.Command) error {
+func startBridgeProvider(ctx *model.Context, bitcoinCfg *config.BitcoinConfig, context osContext.Context, bidxer types.BITCOINTxIndexer, cmd *cobra.Command) error {
 	home := ctx.Config.RootDir
 	bitcoinParam := config.ChainParams(bitcoinCfg.NetworkName)
 	db, err := GetDBContextFromCmd(cmd)
@@ -200,7 +187,7 @@ func startIndexProvider(bidxer types.BITCOINTxIndexer, bidxLogger logger.Logger,
 	return nil
 }
 
-func runEpsService(ctx *Context, cmd *cobra.Command) error {
+func runEpsService(ctx *model.Context, cmd *cobra.Command) error {
 	//	epsLoggerOpt := logger.NewOptions()
 	//	epsLoggerOpt.Format = ctx.Config.LogFormat
 	//	epsLoggerOpt.Level = ctx.Config.LogLevel
@@ -234,7 +221,7 @@ func runEpsService(ctx *Context, cmd *cobra.Command) error {
 	return nil
 }
 
-func runRollupListenerService(ctx *Context, cmd *cobra.Command) error {
+func runRollupListenerService(ctx *model.Context, cmd *cobra.Command) error {
 	//	logger.Infow("rollup indexer service starting...")
 	//	db, err := GetDBContextFromCmd(cmd)
 	//	if err != nil {
@@ -287,7 +274,7 @@ func runRollupListenerService(ctx *Context, cmd *cobra.Command) error {
 	return nil
 }
 
-func runWithDrawService(ctx *Context, cmd *cobra.Command) error {
+func runWithDrawService(ctx *model.Context, cmd *cobra.Command) error {
 	//	logger.Infow("withdraw service starting...")
 	//	db, err := GetDBContextFromCmd(cmd)
 	//	if err != nil {
@@ -355,7 +342,7 @@ func WaitForQuitSignals() int {
 	return int(sig.(syscall.Signal)) + 128
 }
 
-func newLogger(ctx *Context, name string) logger.Logger {
+func newLogger(ctx *model.Context, name string) logger.Logger {
 	bridgeB2NodeLoggerOpt := logger.NewOptions()
 	bridgeB2NodeLoggerOpt.Format = ctx.Config.LogFormat
 	bridgeB2NodeLoggerOpt.Level = ctx.Config.LogLevel

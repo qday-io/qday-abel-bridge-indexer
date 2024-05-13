@@ -23,6 +23,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/sinohope/sinohope-golang-sdk v0.0.0-00010101000000-000000000000
+	github.com/tidwall/gjson v1.17.1
 	golang.org/x/term v0.18.0
 )
 
@@ -34,16 +35,16 @@ require (
 	github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/ethereum/c-kzg-4844 v0.4.0 // indirect
-	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/rs/cors v1.10.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/status-im/keycard-go v0.3.2 // indirect
 	github.com/supranational/blst v0.3.11 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
-	gorm.io/driver/mysql v1.5.6 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 

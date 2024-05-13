@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/btcsuite/btcd/btcjson"
@@ -27,23 +28,43 @@ type BtcIndexer struct {
 // NewBitcoinIndexer new bitcoin indexer
 func NewBitcoinIndexer(
 	log log.Logger,
-	client *rpcclient.Client,
+	ctx *model.Context,
 	chainParams *chaincfg.Params,
 	listenAddress string,
 	targetConfirmations uint64,
-) (types.BITCOINTxIndexer, error) {
+) (types.TxIndexer, error) {
 	// check listenAddress
 	address, err := btcutil.DecodeAddress(listenAddress, chainParams)
 	if err != nil {
 		return nil, fmt.Errorf("%w:%s", ErrDecodeListenAddress, err.Error())
 	}
+
+	bitcoinCfg := ctx.BitcoinConfig
+	bclient, err := rpcclient.New(&rpcclient.ConnConfig{
+		Host:         bitcoinCfg.RPCHost + ":" + bitcoinCfg.RPCPort,
+		User:         bitcoinCfg.RPCUser,
+		Pass:         bitcoinCfg.RPCPass,
+		HTTPPostMode: true,                  // Bitcoin core only supports HTTP POST mode
+		DisableTLS:   bitcoinCfg.DisableTLS, // Bitcoin core does not provide TLS by default
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ailed to create bitcoin client:%v", err.Error())
+	}
+	//defer func() {
+	//	bclient.Shutdown()
+	//}()
+
 	return &BtcIndexer{
 		logger:              log,
-		client:              client,
+		client:              bclient,
 		chainParams:         chainParams,
 		listenAddress:       address,
 		targetConfirmations: targetConfirmations,
 	}, nil
+}
+
+func (b *BtcIndexer) Stop() {
+	b.client.Shutdown()
 }
 
 // ParseBlock parse block data by block height

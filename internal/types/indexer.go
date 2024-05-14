@@ -1,25 +1,22 @@
 package types
 
 import (
-	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
 )
 
 // BITCOINTxIndexer defines the interface of custom bitcoin tx indexer.
 type BITCOINTxIndexer interface {
 	// ParseBlock parse bitcoin block tx
-	ParseBlock(int64, int64) ([]*BitcoinTxParseResult, *wire.BlockHeader, error)
+	ParseBlock(int64, int64) ([]*BitcoinTxParseResult, *BlockInfo, error)
 	// LatestBlock get latest block height in the longest block chain.
 	LatestBlock() (int64, error)
 	// CheckConfirmations get tx detail info
 	CheckConfirmations(txHash string) error
 
-	GetRawTransactionVerbose(txHash string) (*btcjson.TxRawResult, error)
-	BlockChainInfo() (*btcjson.GetBlockChainInfoResult, error)
-	GetRawTransaction(txHash *chainhash.Hash) (*btcutil.Tx, error)
-	GetBlockByHeight(height int64) (*wire.MsgBlock, error)
+	GetRawTransactionVerbose(txHash string) (*TxInfo, error)
+	BlockChainInfo() (*BlockChainInfo, error)
+	GetRawTransaction(txHash *chainhash.Hash) (*TxInfo, error)
+	GetBlockByHeight(height int64) (*BlockInfo, error)
 }
 
 type TxIndexer interface {
@@ -51,4 +48,23 @@ type BitcoinFrom struct {
 type BitcoinTo struct {
 	Address string
 	Value   int64
+}
+
+type BlockChainInfo struct {
+	Chain  string `json:"chain"`
+	Blocks int64  `json:"blocks"`
+	Data   any    `json:"data"`
+}
+
+type BlockInfo struct {
+	Height    int64  `json:"height"`
+	BlockHash string `json:"hash"`
+	Time      int64  `json:"time"`
+	Data      any    `json:"data"`
+}
+
+type TxInfo struct {
+	Hash          string `json:"hash,omitempty"`
+	Confirmations uint64 `json:"confirmations,omitempty"`
+	Data          any    `json:"data"`
 }

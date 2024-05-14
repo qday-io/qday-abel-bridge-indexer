@@ -40,11 +40,9 @@ const (
 // IndexerService indexes transactions for json-rpc service.
 type IndexerService struct {
 	service.BaseService
-
 	txIdxr types.BITCOINTxIndexer
-
-	db  *gorm.DB
-	log log.Logger
+	db     *gorm.DB
+	log    log.Logger
 }
 
 // NewIndexerService returns a new service instance.
@@ -175,7 +173,7 @@ func (bis *IndexerService) OnStart() error {
 				break
 			}
 			if len(txResults) > 0 {
-				currentBlock, currentTxIndex, err = bis.HandleResults(txResults, btcIndex, blockHeader.Timestamp, i)
+				currentBlock, currentTxIndex, err = bis.HandleResults(txResults, btcIndex, time.Unix(blockHeader.Time, 0), i)
 				if err != nil {
 					bis.log.Errorw("failed to handle results", "error", err,
 						"currentBlock", currentBlock, "currentTxIndex", currentTxIndex, "latestBlock", latestBlock)

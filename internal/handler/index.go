@@ -62,10 +62,10 @@ func runIndexerService(ctx *model.Context, cmd *cobra.Command, context osContext
 	bitcoinCfg := ctx.BitcoinConfig
 	logger.Infow("bitcoin index service starting!!!")
 
-	bitcoinParam := config.ChainParams(bitcoinCfg.NetworkName)
 	bidxLogger := newLogger(ctx, "[bitcoin-indexer]")
-	bidxer, err := indexer.NewBitcoinIndexer(bidxLogger, ctx, bitcoinParam, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
-	//bidxer, err = indexer.NewAbelianIndexer(bidxLogger, ctx, bitcoinParam, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
+	//bidxer, err := indexer.NewBitcoinIndexer(bidxLogger, ctx, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
+
+	bidxer, err := indexer.NewAbelianIndexer(bidxLogger, ctx, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
 	if err != nil {
 		logger.Errorw("failed to new bitcoin indexer indexer", "error", err.Error())
 		return err
@@ -102,14 +102,14 @@ func runIndexerService(ctx *model.Context, cmd *cobra.Command, context osContext
 
 func startBridgeProvider(ctx *model.Context, bitcoinCfg *config.BitcoinConfig, context osContext.Context, bidxer types.BITCOINTxIndexer, cmd *cobra.Command) error {
 	home := ctx.Config.RootDir
-	bitcoinParam := config.ChainParams(bitcoinCfg.NetworkName)
+	//bitcoinParam := config.ChainParams(bitcoinCfg.NetworkName)
 	db, err := GetDBContextFromCmd(cmd)
 	if err != nil {
 		logger.Errorw("failed to get db context", "error", err.Error())
 		return err
 	}
 	bridgeLogger := newLogger(ctx, "[bridge-deposit]")
-	bridge, err := indexer.NewBridge(bitcoinCfg.Bridge, path.Join(home, "config"), bridgeLogger, bitcoinParam)
+	bridge, err := indexer.NewBridge(bitcoinCfg.Bridge, path.Join(home, "config"), bridgeLogger, bitcoinCfg.NetworkName)
 	if err != nil {
 		logger.Errorw("failed to create bitcoin bridge", "error", err.Error())
 		return err

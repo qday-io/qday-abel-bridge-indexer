@@ -1,12 +1,12 @@
-network-name = "mainnet"
-rpc-host = "docs-demo.btc.quiknode.pro"
+network-name = "testnet"
+rpc-host = "testnet-rpc-00.abelian.info"
 rpc-port = ""
-rpc-user = ""
-rpc-pass = ""
+rpc-user = "J8y0OnkS2wx9XEgUlW5MqtoRDAQ="
+rpc-pass = "ULlXc/ZMJ375cn6VuSbtU+Y3KGQ="
 disable-tls = false
 wallet-name = ""
 enable-indexer = true
-indexer-listen-address = "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo"
+indexer-listen-address = "0xabe14244fd79ff3d81d9a411faa7e134d255e94b44ee2a7dcb41955556755d7a6e8b"
 indexer-listen-target-confirmations = 1
 
 [bridge]

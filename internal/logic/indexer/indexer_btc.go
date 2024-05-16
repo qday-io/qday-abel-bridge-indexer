@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/b2network/b2-indexer/internal/config"
 	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/log"
@@ -28,17 +29,19 @@ type BtcIndexer struct {
 func NewBitcoinIndexer(
 	log log.Logger,
 	ctx *model.Context,
-	chainParams *chaincfg.Params,
 	listenAddress string,
 	targetConfirmations uint64,
 ) (types.TxIndexer, error) {
+
+	bitcoinCfg := ctx.BitcoinConfig
+	bitcoinParam := config.ChainParams(bitcoinCfg.NetworkName)
 	// check listenAddress
-	address, err := btcutil.DecodeAddress(listenAddress, chainParams)
+	address, err := btcutil.DecodeAddress(listenAddress, bitcoinParam)
+
 	if err != nil {
 		return nil, fmt.Errorf("%w:%s", ErrDecodeListenAddress, err.Error())
 	}
 
-	bitcoinCfg := ctx.BitcoinConfig
 	bclient, err := rpcclient.New(&rpcclient.ConnConfig{
 		Host:         bitcoinCfg.RPCHost + ":" + bitcoinCfg.RPCPort,
 		User:         bitcoinCfg.RPCUser,
@@ -49,14 +52,11 @@ func NewBitcoinIndexer(
 	if err != nil {
 		return nil, fmt.Errorf("ailed to create bitcoin client:%v", err.Error())
 	}
-	//defer func() {
-	//	bclient.Shutdown()
-	//}()
 
 	return &BtcIndexer{
 		logger:              log,
 		client:              bclient,
-		chainParams:         chainParams,
+		chainParams:         bitcoinParam,
 		listenAddress:       address,
 		targetConfirmations: targetConfirmations,
 	}, nil

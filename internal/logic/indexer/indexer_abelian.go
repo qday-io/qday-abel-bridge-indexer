@@ -2,8 +2,8 @@ package indexer
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,47 +11,42 @@ import (
 	"strings"
 	"time"
 
+	"github.com/b2network/b2-indexer/internal/config"
 	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/log"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcd/wire"
+	"github.com/tidwall/gjson"
 )
 
 // AbelianIndexer bitcoin indexer, parse and forward data
 type AbelianIndexer struct {
-	client              *rpcclient.Client // call bitcoin rpc client
-	chainParams         *chaincfg.Params  // bitcoin network params, e.g. mainnet, testnet, etc.
-	listenAddress       btcutil.Address   // need listened bitcoin address
+	client *rpcclient.Client // call bitcoin rpc client
+	//chainParams         *chaincfg.Params  // bitcoin network params, e.g. mainnet, testnet, etc.
+	listenAddress       string // need listened bitcoin address
 	targetConfirmations uint64
+	config              *config.BitcoinConfig
 	ctx                 *model.Context
 	logger              log.Logger
 }
 
 // NewAbelianIndexer new bitcoin indexer
-func NewAbelianIndexer(
-	log log.Logger,
-	ctx *model.Context,
-	chainParams *chaincfg.Params,
-	listenAddress string,
-	targetConfirmations uint64,
-) (types.BITCOINTxIndexer, error) {
+func NewAbelianIndexer(log log.Logger, ctx *model.Context, listenAddress string, targetConfirmations uint64) (types.TxIndexer, error) {
 	// check listenAddress
-	address, err := btcutil.DecodeAddress(listenAddress, chainParams)
-	if err != nil {
-		return nil, fmt.Errorf("%w:%s", ErrDecodeListenAddress, err.Error())
-	}
+	//address, err := btcutil.DecodeAddress(listenAddress, chainParams)
+	//if err != nil {
+	//	return nil, fmt.Errorf("%w:%s", ErrDecodeListenAddress, err.Error())
+	//}
 
+	bitcoinCfg := ctx.BitcoinConfig
 	return &AbelianIndexer{
 		logger:              log,
 		client:              nil,
-		chainParams:         chainParams,
-		listenAddress:       address,
+		listenAddress:       listenAddress,
 		ctx:                 ctx,
+		config:              bitcoinCfg,
 		targetConfirmations: targetConfirmations,
 	}, nil
 }
@@ -70,7 +65,20 @@ func (b *AbelianIndexer) newRequest(id string, method string, params []interface
 
 	bitcoinCfg := b.ctx.BitcoinConfig
 	//url := "https://testnet-rpc-00.abelian.info"
-	url := bitcoinCfg.RPCHost + ":" + bitcoinCfg.RPCPort
+	url := bitcoinCfg.RPCHost
+
+	if len(bitcoinCfg.RPCPort) > 1 {
+		url = fmt.Sprintf("%s:%s", bitcoinCfg.RPCHost, bitcoinCfg.RPCPort)
+	}
+
+	if !strings.HasPrefix(url, "http") && !strings.HasPrefix(url, "https") {
+
+		if bitcoinCfg.DisableTLS {
+			url = fmt.Sprintf("https://%s", url)
+		} else {
+			url = fmt.Sprintf("http://%s", url)
+		}
+	}
 
 	httpReq, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
 	if err != nil {
@@ -103,10 +111,10 @@ func (b *AbelianIndexer) getResponseFromChan(method string, params []interface{}
 	}
 
 	respObj := &AbecJSONRPCResponse{}
-	err = json.Unmarshal(body, respObj)
-	if err != nil {
-		return nil, err
-	}
+	root := gjson.ParseBytes(body)
+	respObj.Result = []byte(root.Get("result").String())
+	respObj.Error = []byte(root.Get("error").String())
+	respObj.ID = root.Get("id").String()
 
 	errorStr := string(respObj.Error)
 	if len(errorStr) > 0 && errorStr != "null" {
@@ -170,115 +178,104 @@ func (b *AbelianIndexer) CheckConfirmations(hash string) error {
 
 // parseTx parse transaction data
 func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxParseResult, error) {
-	//listenAddress := false
-	//var totalValue int64
-	//tos := make([]types.BitcoinTo, 0)
 
-	//
-	//tos, totalValue, listenAddress, _ := b.parseToAddress(txResult.TxOut)
-	//if listenAddress {
-	//	fromAddress, err := b.parseFromAddress(txResult.TxIn)
-	//	if err != nil {
-	//		return nil, fmt.Errorf("vin parse err:%w", err)
-	//	}
-	//
-	//	// TODO: temp fix, if from is listened address, continue
-	//	if len(fromAddress) == 0 {
-	//		b.logger.Warnw("parse from address empty or nonsupport tx type",
-	//			"txId", txResult.TxHash().String(),
-	//			"listenAddress", b.listenAddress.EncodeAddress())
-	//		return nil, nil
-	//	}
-	//
-	//	return &types.BitcoinTxParseResult{
-	//		TxID:   txResult.TxHash().String(),
-	//		TxType: TxTypeTransfer,
-	//		Index:  int64(index),
-	//		Value:  totalValue,
-	//		From:   fromAddress,
-	//		To:     b.listenAddress.EncodeAddress(),
-	//		Tos:    tos,
-	//	}, nil
-	//}
-	return nil, nil
-}
-func (b *AbelianIndexer) parseToAddress(TxOut []*wire.TxOut) (toAddress []types.BitcoinTo, value int64, listenAddress bool, err error) {
-	hasListenAddress := false
-	var totalValue int64
-	tos := make([]types.BitcoinTo, 0)
-
-	for _, v := range TxOut {
-		pkAddress, err := b.parseAddress(v.PkScript)
-		if err != nil {
-			if errors.Is(err, ErrParsePkScript) {
-				continue
-			}
-			// null data
-			if errors.Is(err, ErrParsePkScriptNullData) {
-				continue
-			}
-			return nil, 0, false, err
-		}
-		parseTo := types.BitcoinTo{
-			Address: pkAddress,
-			Value:   v.Value,
-		}
-		tos = append(tos, parseTo)
-		// if pk address eq dest listened address, after parse from address by vin prev tx
-		if pkAddress == b.listenAddress.EncodeAddress() {
-			hasListenAddress = true
-			totalValue += v.Value
-		}
+	bs, err := hex.DecodeString(txResult.Memo)
+	if err != nil {
+		return nil, fmt.Errorf("decode memo error:%w", err)
 	}
 
-	return tos, totalValue, hasListenAddress, nil
-}
+	procf := bs[:4]
 
-// parseFromAddress from vin parse from address
-// return all possible values parsed from address
-// TODO: at present, it is assumed that it is a single from, and multiple from needs to be tested later
-func (b *AbelianIndexer) parseFromAddress(TxIn []*wire.TxIn) (fromAddress []types.BitcoinFrom, err error) {
-	for _, vin := range TxIn {
-		// get prev tx hash
-		prevTxID := vin.PreviousOutPoint.Hash
-		if prevTxID.String() == "0000000000000000000000000000000000000000000000000000000000000000" {
+	//test case
+	//	str := `
+	//{
+	//    "action": "deposit",
+	//    "protocol": "Mable",
+	//    "from": "0xCB369d06BD0aaA813E1d6bad09421D53bB96D175",
+	//    "to": "0xE37e799D5077682FA0a244D46E5649F71457BD09",
+	//    "receipt": "0x1111111254fb6c44bAC0beD2854e76F90643097d",
+	//    "value": "0x10"
+	//}
+	//`
+	//	b.listenAddress = "0x1111111254fb6c44bAC0beD2854e76F90643097d"
+
+	memo := bs[4:]
+	if len(procf) < 1 || len(memo) < 1 {
+		return nil, fmt.Errorf("parse memo error, len:%d, memo:%v", len(memo), memo)
+	}
+
+	var m Memo
+	err = json.Unmarshal(memo, &m)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal memo error, memo:%v", memo)
+	}
+
+	if m.Action != "deposit" && m.Protocol != "Mable" {
+		return nil, nil
+	}
+
+	listenAddress := b.listenAddress
+	if has0xPrefix(listenAddress) {
+		listenAddress = strings.Replace(listenAddress, "0x", "", 1)
+	}
+	toAddress := m.To
+	if has0xPrefix(toAddress) {
+		toAddress = strings.Replace(toAddress, "0x", "", 1)
+	}
+
+	fromAddress := m.From
+	if has0xPrefix(fromAddress) {
+		fromAddress = strings.Replace(fromAddress, "0x", "", 1)
+	}
+
+	hasListenAddress := false
+	if listenAddress == toAddress {
+		hasListenAddress = true
+	}
+	totalValue, _ := strconv.ParseInt(m.Value, 0, 64)
+
+	tos := make([]types.BitcoinTo, 0)
+	parseTo := types.BitcoinTo{
+		Address: m.To,
+		Value:   totalValue,
+	}
+	tos = append(tos, parseTo)
+
+	//tos, totalValue, listenAddress, _ := b.parseToAddress(txResult.Vout)
+	//to is listenAddress and from is not fromAddress
+	if hasListenAddress && listenAddress != fromAddress {
+		//fromAddress, err := b.parseFromAddress(txResult.Vin)
+		//if err != nil {
+		//	return nil, fmt.Errorf("vin parse err:%w", err)
+		//}
+
+		// TODO: temp fix, if from is listened address, continue
+		if len(m.From) == 0 {
+			b.logger.Warnw("parse from address empty or nonsupport tx type",
+				"txId", txResult.TxID,
+				"listenAddress", b.listenAddress)
 			return nil, nil
 		}
-		vinResult, err := b.GetRawTransaction(&prevTxID)
-		if err != nil {
-			return nil, fmt.Errorf("vin get raw transaction err:%w", err)
-		}
 
-		MsgTx, ok := vinResult.Data.(AbecTx)
-		if !ok {
-			return nil, fmt.Errorf("vin convert error")
-		}
-
-		if len(MsgTx.Vout) == 0 {
-			return nil, fmt.Errorf("txOut is null")
-		}
-		vinPKScript := MsgTx.Vout[vin.PreviousOutPoint.Index].Script
-		//  script to address
-		vinPkAddress, err := b.parseAddress([]byte(vinPKScript))
-		if err != nil {
-			b.logger.Errorw("vin parse address", "error", err)
-			if errors.Is(err, ErrParsePkScript) || errors.Is(err, ErrParsePkScriptNullData) {
-				continue
-			}
-			return nil, err
-		}
-
-		fromAddress = append(fromAddress, types.BitcoinFrom{
-			Address: vinPkAddress,
-		})
+		return &types.BitcoinTxParseResult{
+			TxID:   txResult.TxID,
+			TxType: TxTypeTransfer,
+			Index:  int64(index),
+			Value:  totalValue,
+			From: []types.BitcoinFrom{types.BitcoinFrom{
+				Address: m.From,
+			}},
+			To:  b.listenAddress,
+			Tos: tos,
+		}, nil
 	}
-	return fromAddress, nil
+	return nil, nil
 }
 
 // parseAddress from pkscript parse address
-func (b *AbelianIndexer) ParseAddress(pkScript []byte) (string, error) {
-	return b.parseAddress(pkScript)
-}
+//func (b *AbelianIndexer) ParseAddress(pkScript []byte) (string, error) {
+//	return b.parseAddress(pkScript)
+//}
 
 // parseNullData from pkscript parse null data
 //
@@ -292,25 +289,6 @@ func (b *AbelianIndexer) parseNullData(pkScript []byte) (string, error) {
 		return "", fmt.Errorf("not null data type")
 	}
 	return pk.String(), nil
-}
-
-// parseAddress from pkscript parse address
-func (b *AbelianIndexer) parseAddress(pkScript []byte) (string, error) {
-	pk, err := txscript.ParsePkScript(pkScript)
-	if err != nil {
-		return "", fmt.Errorf("%w:%s", ErrParsePkScript, err.Error())
-	}
-
-	if pk.Class() == txscript.NullDataTy {
-		return "", ErrParsePkScriptNullData
-	}
-
-	//  encodes the script into an address for the given chain.
-	pkAddress, err := pk.Address(b.chainParams)
-	if err != nil {
-		return "", fmt.Errorf("PKScript to address err:%w", err)
-	}
-	return pkAddress.EncodeAddress(), nil
 }
 
 // LatestBlock get latest block height in the longest block chain.
@@ -340,7 +318,7 @@ func (b *AbelianIndexer) BlockChainInfo() (*types.BlockChainInfo, error) {
 	}
 
 	blockchainInfo := &types.BlockChainInfo{
-		Chain:  "0", //todo temp
+		Chain:  strconv.FormatInt(abe.NetId, 10),
 		Blocks: abe.Blocks,
 		Data:   abe,
 	}
@@ -392,9 +370,9 @@ func (b *AbelianIndexer) GetBlockByHeight(height int64) (*types.BlockInfo, error
 		return nil, err
 	}
 
-	blockHash := string(resp)
+	//blockHash := string(resp)
 	params2 := make([]interface{}, 0, 1)
-	params2 = append(params2, blockHash, 2)
+	params2 = append(params2, string(resp), 2)
 	resp, err = b.getResponseFromChan("getblockabe", params2)
 	if err != nil {
 		return nil, err
@@ -450,6 +428,7 @@ type AbecTx struct {
 	Size          int64         `json:"size"`
 	FullSize      int64         `json:"fullsize"`
 	Fee           float64       `json:"fee"`
+	Memo          string        `json:"memo"`
 	Witness       string        `json:"witness"`
 	Vin           []*AbecTxVin  `json:"vin"`
 	Vout          []*AbecTxVout `json:"vout"`
@@ -482,9 +461,9 @@ type AbecJSONRPCRequest struct {
 }
 
 type AbecJSONRPCResponse struct {
-	Result json.RawMessage `json:"result"`
-	Error  json.RawMessage `json:"error"`
-	ID     string          `json:"id"`
+	Result []byte `json:"result"`
+	Error  []byte `json:"error"`
+	ID     string `json:"id"`
 }
 
 type AbelianChainInfo struct {
@@ -502,4 +481,25 @@ type AbelianChainInfo struct {
 	Testnet              bool    `json:"testnet" gorm:"column:testnet"`
 	Connections          int64   `json:"connections" gorm:"column:connections"`
 	Errors               string  `json:"errors" gorm:"column:errors"`
+	NetId                int64   `json:"netid" gorm:"column:netid"`
+}
+
+/**
+{
+ "action":"deposit",//操作 Required
+ "protocol":"Mable", //协议 Required
+ "from":"0xCB369d06BD0aaA813E1d6bad09421D53bB96D175",//交易发送者 Required
+ "to":"0xE37e799D5077682FA0a244D46E5649F71457BD09",// 交易到达者 Optional,default address is specified by the operator
+ "receipt":"0x1111111254fb6c44bAC0beD2854e76F90643097d",// L2 接收者 Optional, the value is from memo or bridge portal
+ "value":"0x10" //存款金额 Required
+}
+*/
+
+type Memo struct {
+	Action   string `json:"action"`
+	Protocol string `json:"protocol"`
+	From     string `json:"from"`
+	To       string `json:"to"`
+	Value    string `json:"value"`
+	Receipt  string `json:"receipt"`
 }

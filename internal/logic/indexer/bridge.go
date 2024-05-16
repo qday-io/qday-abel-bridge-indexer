@@ -21,7 +21,6 @@ import (
 	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/b2network/b2-indexer/pkg/particle"
 	"github.com/b2network/b2-indexer/pkg/vsm"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -52,8 +51,8 @@ type Bridge struct {
 	B2ExplorerURL        string
 	logger               log.Logger
 	// particle aa
-	particle     *particle.Particle
-	bitcoinParam *chaincfg.Params
+	particle *particle.Particle
+	network  string
 	// eoa transfer switch
 	enableEoaTransfer bool
 	// aa server
@@ -70,7 +69,7 @@ type B2ExplorerStatus struct {
 var txLock sync.Mutex
 
 // NewBridge new bridge
-func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger, bitcoinParam *chaincfg.Params) (*Bridge, error) {
+func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger, network string) (*Bridge, error) {
 	rpcURL, err := url.ParseRequestURI(bridgeCfg.EthRPCURL)
 	if err != nil {
 		return nil, err
@@ -142,7 +141,7 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 		ABI:                  ABI,
 		logger:               log,
 		particle:             nil,
-		bitcoinParam:         bitcoinParam,
+		network:              network,
 		enableEoaTransfer:    bridgeCfg.EnableEoaTransfer,
 		AAPubKeyAPI:          bridgeCfg.AAB2PI,
 		BaseGasPriceMultiple: bridgeCfg.GasPriceMultiple,
@@ -190,6 +189,8 @@ func (b *Bridge) Deposit(
 	if err != nil {
 		return nil, nil, toAddress, "", err
 	}
+
+	b.logger.Infof("deposit success: hash:%v", tx.Hash().String())
 
 	return tx, data, toAddress, b.FromAddress(), nil
 }
@@ -460,7 +461,7 @@ func (b *Bridge) ABIPack(abiData string, method string, args ...interface{}) ([]
 
 // BitcoinAddressToEthAddress bitcoin address to eth address
 func (b *Bridge) BitcoinAddressToEthAddress(bitcoinAddress b2types.BitcoinFrom) (string, error) {
-	pubKeyResp, err := aa.GetPubKey(b.AAPubKeyAPI, bitcoinAddress.Address, b.bitcoinParam.Name)
+	pubKeyResp, err := aa.GetPubKey(b.AAPubKeyAPI, bitcoinAddress.Address, b.network)
 	if err != nil {
 		b.logger.Errorw("get pub key:", "pubKeyResp", pubKeyResp, "address", bitcoinAddress.Address)
 		return "", err

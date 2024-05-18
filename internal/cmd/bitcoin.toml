@@ -6,16 +6,16 @@ rpc-pass = "ULlXc/ZMJ375cn6VuSbtU+Y3KGQ="
 disable-tls = false
 wallet-name = ""
 enable-indexer = true
-indexer-listen-address = "0xabe14244fd79ff3d81d9a411faa7e134d255e94b44ee2a7dcb41955556755d7a6e8b"
+indexer-listen-address = "abe338ce0ce178fb0aca42b4e400cdf395c92cbf9c5c9abd678aa516835f697bd6d280b285815924f862352c5463421c9f8d247f65dc112aa04c25de925bd1d1a334"
 indexer-listen-target-confirmations = 1
 
 [bridge]
 eth-rpc-url = "http://124.243.137.251:8123"
-eth-priv-key = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-contract-address = "0x4A679253410272dd5232B3Ff7cF5dbB88f295319"
+eth-priv-key = "0x267ecea4fb57a83dd164e6b27af977ac6898743daaeff1127040f1c0722b6286"
+contract-address = "0xcbB599174AF426C2D71402C21DeeC31238a8F27A"
 abi = ""
 enable-eoa-transfer = false
-aa-b2-api = "localhost:9002"
+aa-b2-api = "http://190.92.213.101:9002:9002"
 aa-particle-rpc = "https://rpc.particle.network/evm-chain"
 aa-particle-project-id = "11111"
 aa-particle-server-key = "22222"

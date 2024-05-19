@@ -188,7 +188,7 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 		return nil, fmt.Errorf("decode memo error:%w", err)
 	}
 
-	//procf := bs[:5]
+	//procf := bs[:8]
 
 	//test case
 	//str := `
@@ -209,11 +209,11 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 
 	//memo := []byte(str)
 
-	if len(bs) != 8 {
+	if len(bs) < 9 {
 		return nil, fmt.Errorf("decode memo error:%w", err)
 	}
 
-	memo := bs[9:]
+	memo := bs[8:]
 	if len(memo) < 1 {
 		return nil, fmt.Errorf("parse memo error, len:%d, memo:%v", len(memo), string(memo))
 	}

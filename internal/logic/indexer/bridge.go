@@ -169,12 +169,14 @@ func (b *Bridge) Deposit(
 
 	ctx := context.Background()
 
-	toAddress, err := b.BitcoinAddressToEthAddress(hash, bitcoinAddress)
-	if err != nil {
-		return nil, nil, "", "", fmt.Errorf("btc address to eth address err:%w", err)
-	}
+	//toAddress, err := b.BitcoinAddressToEthAddress(hash, bitcoinAddress)
+	//if err != nil {
+	//	return nil, nil, "", "", fmt.Errorf("btc address to eth address err:%w", err)
+	//}
 
-	//toAddress := "0xdac17f958d2ee523a2206206994597c13d831ec7"
+	//todo test case
+	toAddress := "0xdac17f958d2ee523a2206206994597c13d831ec7"
+
 	data, err := b.ABIPack(b.ABI, "depositV2", common.HexToHash(hash), common.HexToAddress(toAddress), new(big.Int).SetInt64(amount))
 	if err != nil {
 		return nil, nil, toAddress, "", fmt.Errorf("abi pack err:%w", err)

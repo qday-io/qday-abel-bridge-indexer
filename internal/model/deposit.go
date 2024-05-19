@@ -58,22 +58,22 @@ type Deposit struct {
 	Base
 	BtcBlockNumber   int64     `json:"btc_block_number" gorm:"index;comment:bitcoin block number"`
 	BtcTxIndex       int64     `json:"btc_tx_index" gorm:"comment:bitcoin tx index"`
-	BtcTxHash        string    `json:"btc_tx_hash" gorm:"type:varchar(64);not null;default:'';uniqueIndex;comment:bitcoin tx hash"`
+	BtcTxHash        string    `json:"btc_tx_hash" gorm:"type:text;not null;default:'';uniqueIndex;comment:bitcoin tx hash"`
 	BtcTxType        int       `json:"btc_tx_type" gorm:"type:SMALLINT;default:0;comment:btc tx type"`
 	BtcFroms         string    `json:"btc_froms" gorm:"type:jsonb;comment:bitcoin transfer, from may be multiple"`
-	BtcFrom          string    `json:"btc_from" gorm:"type:varchar(64);not null;default:'';index"`
+	BtcFrom          string    `json:"btc_from" gorm:"type:text;not null;default:'';index"`
 	BtcTos           string    `json:"btc_tos" gorm:"type:jsonb;comment:bitcoin transfer, to may be multiple"`
-	BtcTo            string    `json:"btc_to" gorm:"type:varchar(64);not null;default:'';index"`
-	BtcFromAAAddress string    `json:"btc_from_aa_address" gorm:"type:varchar(42);default:'';comment:from aa address"`
+	BtcTo            string    `json:"btc_to" gorm:"type:text;not null;default:'';index"`
+	BtcFromAAAddress string    `json:"btc_from_aa_address" gorm:"type:text;default:'';comment:from aa address"`
 	BtcValue         int64     `json:"btc_value" gorm:"default:0;comment:bitcoin transfer value"`
-	B2TxFrom         string    `json:"b2_tx_from" gorm:"type:varchar(42);default:'';comment:from address"`
-	B2TxHash         string    `json:"b2_tx_hash" gorm:"type:varchar(66);not null;default:'';index;comment:b2 network tx hash"`
+	B2TxFrom         string    `json:"b2_tx_from" gorm:"type:text;default:'';comment:from address"`
+	B2TxHash         string    `json:"b2_tx_hash" gorm:"type:text;not null;default:'';index;comment:b2 network tx hash"`
 	B2TxNonce        uint64    `json:"b2_tx_nonce" gorm:"default:0"`
 	B2TxStatus       int       `json:"b2_tx_status" gorm:"type:SMALLINT;default:1"`
 	B2TxRetry        int       `json:"b2_tx_retry" gorm:"type:SMALLINT;default:0"`
-	B2EoaTxFrom      string    `json:"b2_eoa_tx_from" gorm:"type:varchar(42);default:'';comment:from address"`
+	B2EoaTxFrom      string    `json:"b2_eoa_tx_from" gorm:"type:text;default:'';comment:from address"`
 	B2EoaTxNonce     uint64    `json:"b2_eoa_tx_nonce" gorm:"default:0"`
-	B2EoaTxHash      string    `json:"b2_eoa_tx_hash" gorm:"type:varchar(66);not null;default:'';comment:b2 network eoa tx hash"`
+	B2EoaTxHash      string    `json:"b2_eoa_tx_hash" gorm:"type:text;not null;default:'';comment:b2 network eoa tx hash"`
 	B2EoaTxStatus    int       `json:"b2_eoa_tx_status" gorm:"type:SMALLINT;default:1"`
 	BtcBlockTime     time.Time `json:"btc_block_time"`
 	CallbackStatus   int       `json:"callback_status" gorm:"type:SMALLINT;default:0"`

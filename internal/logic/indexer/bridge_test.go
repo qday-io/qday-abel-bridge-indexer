@@ -52,14 +52,10 @@ func init2(t *testing.T) *indexer.Bridge {
 	}
 
 	bridgeCfg := config.BridgeConfig{
-		EthRPCURL:           "http://124.243.137.251:8123",
-		ContractAddress:     "0xD4074af496C9e1B44b8f26675848cDEb1C3b4ecB",
-		EthPrivKey:          "8623eb1173b001788b7dc789513c34d049a3d02c728b50daae5799fca009e111",
-		ABI:                 ABI,
-		AAParticleRPC:       "http://190.92.213.101:9002",
-		AAParticleProjectID: "1111",
-		AAParticleServerKey: "",
-		AAParticleChainID:   1102,
+		EthRPCURL:       "http://124.243.137.251:8123",
+		ContractAddress: "0xDB6a51588433f0366082330aCFa8d2b7a1a5400A",
+		EthPrivKey:      "8623eb1173b001788b7dc789513c34d049a3d02c728b50daae5799fca009e111",
+		ABI:             ABI,
 	}
 
 	log := newLogger("[bridge]")
@@ -194,7 +190,6 @@ func randHash(t *testing.T) string {
 func TestLocalBatchRestNonce(t *testing.T) {
 	config, err := config.LoadBitcoinConfig("")
 	require.NoError(t, err)
-	config.Bridge.EnableVSM = false
 	// custom rpc key gas price
 	// config.Bridge.GasPriceMultiple = 3
 	// config.Bridge.EthRPCURL = ""
@@ -301,7 +296,7 @@ func testSendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey,
 
 func TestBridge_Deposit(t *testing.T) {
 	b := init2(t)
-	hash := "0x8af2e0edf453c7a43ca3a8fc8661041b18ae5a67b111e0e0f3edcf8285950016"
+	hash := "0x8af2e0edf453c7a43ca3a8fc8661041b18ae5a67b111e0e0f3edcf8285950029"
 	//hex.EncodeToString()
 	from := b2types.BitcoinFrom{
 		Address: "0xCB369d06BD0aaA813E1d6bad09421D53bB96D175",
@@ -314,7 +309,10 @@ func TestBridge_Deposit(t *testing.T) {
 	fromAddress := crypto.PubkeyToAddress(b.EthPrivKey.PublicKey)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 
+	log.Infof("from address:%v", fromAddress.Hex(), nonce)
+
 	tos := "[{\"Value\": 16, \"Address\": \"0x1111111254fb6c44bAC0beD2854e76F90643097d\"}]"
+
 	b2Tx, _, aaAddress, fromAddr, err := b.Deposit(hash, from, tos, 150000000000, nil, nonce, false)
 
 	if err != nil {

@@ -221,7 +221,7 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 	action := gjson.ParseBytes(memo).Get("action").String()
 	protocol := gjson.ParseBytes(memo).Get("protocol").String()
 
-	if action != "deposit" && protocol != "Mable" {
+	if action != "deposit" || protocol != "Mable" {
 		return nil, nil
 	}
 

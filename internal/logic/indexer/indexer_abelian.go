@@ -179,39 +179,56 @@ func (b *AbelianIndexer) CheckConfirmations(hash string) error {
 // parseTx parse transaction data
 func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxParseResult, error) {
 
+	if len(txResult.Memo) < 9 {
+		b.logger.Warnf("tx has not fount memo, hash:%v", txResult.TxID)
+		return nil, nil
+	}
 	bs, err := hex.DecodeString(txResult.Memo)
 	if err != nil {
 		return nil, fmt.Errorf("decode memo error:%w", err)
 	}
 
-	procf := bs[:4]
+	//procf := bs[:5]
 
 	//test case
-	//	str := `
+	//str := `
 	//{
-	//    "action": "deposit",
-	//    "protocol": "Mable",
-	//    "from": "0xCB369d06BD0aaA813E1d6bad09421D53bB96D175",
-	//    "to": "0xE37e799D5077682FA0a244D46E5649F71457BD09",
-	//    "receipt": "0x1111111254fb6c44bAC0beD2854e76F90643097d",
-	//    "value": "0x10"
+	//   "action": "deposit",
+	//   "protocol": "Mable",
+	//   "from": "0xCB369d06BD0aaA813E1d6bad09421D53bB96D175",
+	//   "to": "0xE37e799D5077682FA0a244D46E5649F71457BD09",
+	//   "receipt": "0x1111111254fb6c44bAC0beD2854e76F90643097d",
+	//   "value": "0x10"
 	//}
 	//`
-	//	b.listenAddress = "0x1111111254fb6c44bAC0beD2854e76F90643097d"
 
-	memo := bs[4:]
-	if len(procf) < 1 || len(memo) < 1 {
-		return nil, fmt.Errorf("parse memo error, len:%d, memo:%v", len(memo), memo)
+	/**
+	{"action":"inscribe","protocol":"Mable","from":"abe32f5c9dd67b6f0e11333fc54e4b54d1f05456ea0e2abc6e1459b056271e3de6180f7cca4ca880a8839c72d412987ffd47d7fdca60fce5838bfcbea68dd741146b","networkname":"abe-test","proofRootHash":"2dba5dbc339e7316aea2683faf839c1b7b1ee2313db792112588118df066aa35","stateRootHash":"088314330cd2c7929b88219179fe0c69c5fd85176a1c5b0f7de56591e283e45c"}
+	*/
+	//b.listenAddress = "0xE37e799D5077682FA0a244D46E5649F71457BD09"
+
+	//memo := []byte(str)
+
+	if len(bs) != 8 {
+		return nil, fmt.Errorf("decode memo error:%w", err)
+	}
+
+	memo := bs[9:]
+	if len(memo) < 1 {
+		return nil, fmt.Errorf("parse memo error, len:%d, memo:%v", len(memo), string(memo))
+	}
+
+	action := gjson.ParseBytes(memo).Get("action").String()
+	protocol := gjson.ParseBytes(memo).Get("protocol").String()
+
+	if action != "deposit" && protocol != "Mable" {
+		return nil, nil
 	}
 
 	var m Memo
 	err = json.Unmarshal(memo, &m)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal memo error, memo:%v", memo)
-	}
-
-	if m.Action != "deposit" && m.Protocol != "Mable" {
-		return nil, nil
+		return nil, fmt.Errorf("unmarshal memo error, memo:%v", string(memo))
 	}
 
 	listenAddress := b.listenAddress
@@ -236,7 +253,7 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 
 	tos := make([]types.BitcoinTo, 0)
 	parseTo := types.BitcoinTo{
-		Address: m.To,
+		Address: m.Receipt,
 		Value:   totalValue,
 	}
 	tos = append(tos, parseTo)

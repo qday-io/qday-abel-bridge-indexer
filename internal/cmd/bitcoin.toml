@@ -14,14 +14,7 @@ eth-rpc-url = "http://124.243.137.251:8123"
 eth-priv-key = "8623eb1173b001788b7dc789513c34d049a3d02c728b50daae5799fca009e111"
 contract-address = "0xD4074af496C9e1B44b8f26675848cDEb1C3b4ecB"
 abi = ""
-enable-eoa-transfer = false
 aa-b2-api = "http://190.92.213.101:9002"
-aa-particle-rpc = "https://rpc.particle.network/evm-chain"
-aa-particle-project-id = "11111"
-aa-particle-server-key = "22222"
-aa-particle-chain-id = 1102
-gas-price-multiple = 2
-b2-explorer-url = ""
 enable-withdraw-listener = false
 deposit = ""
 withdraw = ""
@@ -30,11 +23,6 @@ publickeys = []
 time-interval = 10
 multisig-num = 0
 enable-rollup-listener = false
-enable-vsm = false
-vsm-internal-key-index = 0
-vsm-iv = ""
-local-decrypt-key = ""
-local-decrypt-alg = ""
 
 [eps]
 enable-eps = false

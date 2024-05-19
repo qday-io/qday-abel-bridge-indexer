@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -17,10 +16,8 @@ import (
 	"github.com/b2network/b2-indexer/internal/config"
 	b2types "github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/aa"
-	b2crypto "github.com/b2network/b2-indexer/pkg/crypto"
 	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/b2network/b2-indexer/pkg/particle"
-	"github.com/b2network/b2-indexer/pkg/vsm"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -54,7 +51,7 @@ type Bridge struct {
 	particle *particle.Particle
 	network  string
 	// eoa transfer switch
-	enableEoaTransfer bool
+	//enableEoaTransfer bool
 	// aa server
 	AAPubKeyAPI string
 }
@@ -94,38 +91,10 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 	//	return nil, err
 	//}
 	ethPrivKey := bridgeCfg.EthPrivKey
-	if bridgeCfg.EnableVSM {
-		tassInputData, err := hex.DecodeString(ethPrivKey)
-		if err != nil {
-			return nil, err
-		}
-		decKey, _, err := vsm.TassSymmKeyOperation(vsm.TaDec, vsm.AlgAes256, tassInputData, []byte(bridgeCfg.VSMIv), bridgeCfg.VSMInternalKeyIndex)
-		if err != nil {
-			return nil, err
-		}
-		ethPrivKey = string(bytes.TrimRight(decKey, "\x00"))
-		if bridgeCfg.LocalDecryptAlg == b2crypto.AlgAes {
-			decEthPrivKey, err := hex.DecodeString(ethPrivKey)
-			if err != nil {
-				return nil, err
-			}
-			localKey, err := hex.DecodeString(bridgeCfg.LocalDecryptKey)
-			if err != nil {
-				return nil, err
-			}
-			localDecEthPrivKey, err := b2crypto.AesDecrypt(decEthPrivKey, localKey)
-			if err != nil {
-				return nil, err
-			}
-			ethPrivKey = string(localDecEthPrivKey)
-		} else if bridgeCfg.LocalDecryptAlg == b2crypto.AlgRsa {
-			localDecEthPrivKey, err := b2crypto.RsaDecryptHex(ethPrivKey, bridgeCfg.LocalDecryptKey)
-			if err != nil {
-				return nil, err
-			}
-			ethPrivKey = localDecEthPrivKey
-		}
-	}
+
+	//todo temp
+	//bridgeCfg.EnableVSM = false
+
 	if has0xPrefix(ethPrivKey) {
 		ethPrivKey = ethPrivKey[2:]
 	}
@@ -135,14 +104,14 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 	}
 	log.Infof("load eth address: %s", crypto.PubkeyToAddress(privateKey.PublicKey))
 	return &Bridge{
-		EthRPCURL:            rpcURL.String(),
-		ContractAddress:      common.HexToAddress(bridgeCfg.ContractAddress),
-		EthPrivKey:           privateKey,
-		ABI:                  ABI,
-		logger:               log,
-		particle:             nil,
-		network:              network,
-		enableEoaTransfer:    bridgeCfg.EnableEoaTransfer,
+		EthRPCURL:       rpcURL.String(),
+		ContractAddress: common.HexToAddress(bridgeCfg.ContractAddress),
+		EthPrivKey:      privateKey,
+		ABI:             ABI,
+		logger:          log,
+		particle:        nil,
+		network:         network,
+		//enableEoaTransfer:    bridgeCfg.EnableEoaTransfer,
 		AAPubKeyAPI:          bridgeCfg.AAB2PI,
 		BaseGasPriceMultiple: bridgeCfg.GasPriceMultiple,
 		B2ExplorerURL:        bridgeCfg.B2ExplorerURL,
@@ -540,7 +509,7 @@ func (b *Bridge) TransactionByHash(hash string) (*types.Transaction, bool, error
 }
 
 func (b *Bridge) EnableEoaTransfer() bool {
-	return b.enableEoaTransfer
+	return false
 }
 
 func (b *Bridge) FromAddress() string {

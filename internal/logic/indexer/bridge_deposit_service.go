@@ -64,8 +64,12 @@ func NewBridgeDepositService(
 // OnStart
 func (bis *BridgeDepositService) OnStart() error {
 	bis.wg.Add(2)
+
 	go bis.Deposit()
-	go bis.CheckDeposit()
+
+	if bis.bridgeCfg.EnableRollupListener {
+		go bis.CheckDeposit()
+	}
 	bis.stopChan = make(chan struct{})
 	select {}
 }

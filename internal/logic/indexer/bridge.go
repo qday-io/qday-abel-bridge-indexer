@@ -153,6 +153,7 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 func (b *Bridge) Deposit(
 	hash string,
 	bitcoinAddress b2types.BitcoinFrom,
+	tos string,
 	amount int64,
 	oldTx *types.Transaction,
 	nonce uint64,
@@ -168,10 +169,12 @@ func (b *Bridge) Deposit(
 
 	ctx := context.Background()
 
-	toAddress, err := b.BitcoinAddressToEthAddress(bitcoinAddress)
+	toAddress, err := b.BitcoinAddressToEthAddress(hash, bitcoinAddress)
 	if err != nil {
 		return nil, nil, "", "", fmt.Errorf("btc address to eth address err:%w", err)
 	}
+
+	//toAddress := "0xdac17f958d2ee523a2206206994597c13d831ec7"
 	data, err := b.ABIPack(b.ABI, "depositV2", common.HexToHash(hash), common.HexToAddress(toAddress), new(big.Int).SetInt64(amount))
 	if err != nil {
 		return nil, nil, toAddress, "", fmt.Errorf("abi pack err:%w", err)
@@ -209,7 +212,7 @@ func (b *Bridge) Transfer(bitcoinAddress b2types.BitcoinFrom,
 
 	ctx := context.Background()
 
-	toAddress, err := b.BitcoinAddressToEthAddress(bitcoinAddress)
+	toAddress, err := b.BitcoinAddressToEthAddress("", bitcoinAddress)
 	if err != nil {
 		return nil, "", fmt.Errorf("btc address to eth address err:%w", err)
 	}
@@ -298,23 +301,24 @@ func (b *Bridge) sendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey
 	// use eth_estimateGas only check deposit err
 	gas, err := client.EstimateGas(ctx, callMsg)
 	if err != nil {
-		// Other errors may occur that need to be handled
-		// The estimated gas cannot block the sending of a transaction
-		b.logger.Errorw("estimate gas err", "error", err.Error())
-		if strings.Contains(err.Error(), ErrBridgeDepositTxHashExist.Error()) {
-			return nil, ErrBridgeDepositTxHashExist
-		}
-
-		if strings.Contains(err.Error(), ErrBridgeDepositContractInsufficientBalance.Error()) {
-			return nil, ErrBridgeDepositContractInsufficientBalance
-		}
-
-		if strings.Contains(err.Error(), ErrBridgeFromGasInsufficient.Error()) {
-			return nil, ErrBridgeFromGasInsufficient
-		}
-
-		// estimate gas err, return, try again
-		return nil, err
+		//	// Other errors may occur that need to be handled
+		//	// The estimated gas cannot block the sending of a transaction
+		//	b.logger.Errorw("estimate gas err", "error", err.Error())
+		//	if strings.Contains(err.Error(), ErrBridgeDepositTxHashExist.Error()) {
+		//		return nil, ErrBridgeDepositTxHashExist
+		//	}
+		//
+		//	if strings.Contains(err.Error(), ErrBridgeDepositContractInsufficientBalance.Error()) {
+		//		return nil, ErrBridgeDepositContractInsufficientBalance
+		//	}
+		//
+		//	if strings.Contains(err.Error(), ErrBridgeFromGasInsufficient.Error()) {
+		//		return nil, ErrBridgeFromGasInsufficient
+		//	}
+		//
+		//	// estimate gas err, return, try again
+		//	return nil, err
+		gas = 30000
 	}
 	gas *= 2
 	legacyTx := types.LegacyTx{
@@ -460,8 +464,8 @@ func (b *Bridge) ABIPack(abiData string, method string, args ...interface{}) ([]
 }
 
 // BitcoinAddressToEthAddress bitcoin address to eth address
-func (b *Bridge) BitcoinAddressToEthAddress(bitcoinAddress b2types.BitcoinFrom) (string, error) {
-	pubKeyResp, err := aa.GetPubKey(b.AAPubKeyAPI, bitcoinAddress.Address, b.network)
+func (b *Bridge) BitcoinAddressToEthAddress(hash string, bitcoinAddress b2types.BitcoinFrom) (string, error) {
+	pubKeyResp, err := aa.GetPubKey(b.AAPubKeyAPI, hash, bitcoinAddress.Address, b.network)
 	if err != nil {
 		b.logger.Errorw("get pub key:", "pubKeyResp", pubKeyResp, "address", bitcoinAddress.Address)
 		return "", err

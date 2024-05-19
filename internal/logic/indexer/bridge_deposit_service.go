@@ -267,7 +267,7 @@ func (bis *BridgeDepositService) HandleDeposit(deposit *model.Deposit, oldTx *et
 	// send deposit tx
 	b2Tx, _, aaAddress, fromAddress, err := bis.bridge.Deposit(deposit.BtcTxHash, types.BitcoinFrom{
 		Address: deposit.BtcFrom,
-	}, deposit.BtcValue, oldTx, nonce, resetNonce)
+	}, deposit.BtcTos, deposit.BtcValue, oldTx, nonce, resetNonce)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrBridgeDepositTxHashExist):

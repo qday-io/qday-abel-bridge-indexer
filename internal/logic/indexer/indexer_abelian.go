@@ -180,12 +180,13 @@ func (b *AbelianIndexer) CheckConfirmations(hash string) error {
 func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxParseResult, error) {
 
 	if len(txResult.Memo) < 9 {
-		b.logger.Warnf("tx has not fount memo, hash:%v", txResult.TxID)
+		b.logger.Warnf("memo format error, txId:%v,memo:%v", txResult.TxID, txResult.Memo)
 		return nil, nil
 	}
 	bs, err := hex.DecodeString(txResult.Memo)
 	if err != nil {
-		return nil, fmt.Errorf("decode memo error:%w", err)
+		b.logger.Warnf("decode memo error:%v,txId:%v,memo:%v", err, txResult.TxID, txResult.Memo)
+		return nil, nil
 	}
 
 	//procf := bs[:8]
@@ -210,12 +211,14 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 	//memo := []byte(str)
 
 	if len(bs) < 9 {
-		return nil, fmt.Errorf("decode memo error:%w", err)
+		b.logger.Warnf("memo format ,txId:%v,memo:%v", txResult.TxID, string(bs))
+		return nil, nil
 	}
 
 	memo := bs[8:]
 	if len(memo) < 1 {
-		return nil, fmt.Errorf("parse memo error, len:%d, memo:%v", len(memo), string(memo))
+		b.logger.Warnf("parse memo ,txId:%v,memo:%v", txResult.TxID, string(bs))
+		return nil, nil
 	}
 
 	action := gjson.ParseBytes(memo).Get("action").String()
@@ -228,7 +231,8 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 	var m Memo
 	err = json.Unmarshal(memo, &m)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal memo error, memo:%v", string(memo))
+		b.logger.Errorf("unmarshal memo error:%v,txId:%v,memo:%v", err, txResult.TxID, string(memo))
+		return nil, nil
 	}
 
 	listenAddress := b.listenAddress

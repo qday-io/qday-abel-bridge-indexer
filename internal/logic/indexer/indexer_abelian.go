@@ -12,41 +12,33 @@ import (
 	"time"
 
 	"github.com/b2network/b2-indexer/internal/config"
-	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/tidwall/gjson"
 )
 
 // AbelianIndexer bitcoin indexer, parse and forward data
 type AbelianIndexer struct {
-	client *rpcclient.Client // call bitcoin rpc client
 	//chainParams         *chaincfg.Params  // bitcoin network params, e.g. mainnet, testnet, etc.
 	listenAddress       string // need listened bitcoin address
 	targetConfirmations uint64
-	config              *config.BitcoinConfig
-	ctx                 *model.Context
+	bitcoinCfg          *config.BitcoinConfig
 	logger              log.Logger
 }
 
 // NewAbelianIndexer new bitcoin indexer
-func NewAbelianIndexer(log log.Logger, ctx *model.Context, listenAddress string, targetConfirmations uint64) (types.TxIndexer, error) {
+func NewAbelianIndexer(log log.Logger, bitcoinCfg *config.BitcoinConfig, listenAddress string, targetConfirmations uint64) (types.TxIndexer, error) {
 	// check listenAddress
 	//address, err := btcutil.DecodeAddress(listenAddress, chainParams)
 	//if err != nil {
 	//	return nil, fmt.Errorf("%w:%s", ErrDecodeListenAddress, err.Error())
 	//}
-
-	bitcoinCfg := ctx.BitcoinConfig
 	return &AbelianIndexer{
 		logger:              log,
-		client:              nil,
 		listenAddress:       listenAddress,
-		ctx:                 ctx,
-		config:              bitcoinCfg,
+		bitcoinCfg:          bitcoinCfg,
 		targetConfirmations: targetConfirmations,
 	}, nil
 }
@@ -63,17 +55,17 @@ func (b *AbelianIndexer) newRequest(id string, method string, params []interface
 		return nil, err
 	}
 
-	bitcoinCfg := b.ctx.BitcoinConfig
+	//bitcoinCfg := b.config
 	//url := "https://testnet-rpc-00.abelian.info"
-	url := bitcoinCfg.RPCHost
+	url := b.bitcoinCfg.RPCHost
 
-	if len(bitcoinCfg.RPCPort) > 1 {
-		url = fmt.Sprintf("%s:%s", bitcoinCfg.RPCHost, bitcoinCfg.RPCPort)
+	if len(b.bitcoinCfg.RPCPort) > 1 {
+		url = fmt.Sprintf("%s:%s", b.bitcoinCfg.RPCHost, b.bitcoinCfg.RPCPort)
 	}
 
 	if !strings.HasPrefix(url, "http") && !strings.HasPrefix(url, "https") {
 
-		if bitcoinCfg.DisableTLS {
+		if b.bitcoinCfg.DisableTLS {
 			url = fmt.Sprintf("https://%s", url)
 		} else {
 			url = fmt.Sprintf("http://%s", url)
@@ -85,7 +77,7 @@ func (b *AbelianIndexer) newRequest(id string, method string, params []interface
 		return nil, err
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.SetBasicAuth(bitcoinCfg.RPCUser, bitcoinCfg.RPCPass)
+	httpReq.SetBasicAuth(b.bitcoinCfg.RPCUser, b.bitcoinCfg.RPCPass)
 
 	return httpReq, nil
 }
@@ -125,7 +117,6 @@ func (b *AbelianIndexer) getResponseFromChan(method string, params []interface{}
 }
 
 func (b *AbelianIndexer) Stop() {
-	b.client.Shutdown()
 }
 
 // ParseBlock parse block data by block height

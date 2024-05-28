@@ -65,7 +65,7 @@ func runIndexerService(ctx *model.Context, cmd *cobra.Command, context osContext
 	bidxLogger := newLogger(ctx, "[bitcoin-indexer]")
 	//bidxer, err := indexer.NewBitcoinIndexer(bidxLogger, ctx, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
 
-	bidxer, err := indexer.NewAbelianIndexer(bidxLogger, ctx, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
+	bidxer, err := indexer.NewAbelianIndexer(bidxLogger, bitcoinCfg, bitcoinCfg.IndexerListenAddress, bitcoinCfg.IndexerListenTargetConfirmations)
 	if err != nil {
 		logger.Errorw("failed to new bitcoin indexer indexer", "error", err.Error())
 		return err

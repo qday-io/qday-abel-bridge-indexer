@@ -2,7 +2,7 @@ package indexer
 
 import (
 	"bytes"
-	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -174,7 +174,7 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 		b.logger.Warnf("memo format error, txId:%v,memo:%v", txResult.TxID, txResult.Memo)
 		return nil, nil
 	}
-	bs, err := base64.StdEncoding.DecodeString(txResult.Memo)
+	bs, err := hex.DecodeString(txResult.Memo)
 	if err != nil {
 		b.logger.Warnf("decode memo error:%v,txId:%v,memo:%v", err, txResult.TxID, txResult.Memo)
 		return nil, nil

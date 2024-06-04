@@ -37,8 +37,8 @@ type IndexerService struct {
 	log    log.Logger
 }
 
-// NewIndexerService returns a new service instance.
-func NewIndexerService(
+// NewRollupService returns a new service instance.
+func NewRollupService(
 	ethCli *ethclient.Client,
 	config *config.BitcoinConfig,
 	db *gorm.DB,

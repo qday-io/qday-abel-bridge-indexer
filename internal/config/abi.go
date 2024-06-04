@@ -3,37 +3,6 @@ package config
 var DefaultDepositAbi = `
 [
     {
-      "inputs": [],
-      "name": "AccessControlBadConfirmation",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "account",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "neededRole",
-          "type": "bytes32"
-        }
-      ],
-      "name": "AccessControlUnauthorizedAccount",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "InvalidInitialization",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "NotInitializing",
-      "type": "error"
-    },
-    {
       "anonymous": false,
       "inputs": [
         {
@@ -53,12 +22,6 @@ var DefaultDepositAbi = `
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "deposit_uuid",
-          "type": "bytes32"
         }
       ],
       "name": "DepositEvent",
@@ -69,9 +32,9 @@ var DefaultDepositAbi = `
       "inputs": [
         {
           "indexed": false,
-          "internalType": "uint64",
+          "internalType": "uint8",
           "name": "version",
-          "type": "uint64"
+          "type": "uint8"
         }
       ],
       "name": "Initialized",
@@ -172,12 +135,6 @@ var DefaultDepositAbi = `
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "withdraw_uuid",
-          "type": "bytes32"
         }
       ],
       "name": "WithdrawEvent",
@@ -212,11 +169,6 @@ var DefaultDepositAbi = `
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "deposit_uuid",
-          "type": "bytes32"
-        },
-        {
           "internalType": "address",
           "name": "b2_to_address",
           "type": "address"
@@ -233,16 +185,26 @@ var DefaultDepositAbi = `
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "getMinB2Amount",
-      "outputs": [
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "deposit_uuid",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "b2_to_address",
+          "type": "address"
+        },
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "btc_amount",
           "type": "uint256"
         }
       ],
-      "stateMutability": "view",
+      "name": "depositV2",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -314,19 +276,6 @@ var DefaultDepositAbi = `
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "min_b2_amount",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "bytes32",
@@ -335,7 +284,7 @@ var DefaultDepositAbi = `
         },
         {
           "internalType": "address",
-          "name": "callerConfirmation",
+          "name": "account",
           "type": "address"
         }
       ],
@@ -358,19 +307,6 @@ var DefaultDepositAbi = `
         }
       ],
       "name": "revokeRole",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_min_b2_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "setMinB2Amount",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -410,6 +346,19 @@ var DefaultDepositAbi = `
     {
       "inputs": [
         {
+          "internalType": "string",
+          "name": "btc_address",
+          "type": "string"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes32",
           "name": "withdraw_uuid",
           "type": "bytes32"
@@ -420,7 +369,7 @@ var DefaultDepositAbi = `
           "type": "string"
         }
       ],
-      "name": "withdraw",
+      "name": "withdrawV2",
       "outputs": [],
       "stateMutability": "payable",
       "type": "function"

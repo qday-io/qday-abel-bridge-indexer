@@ -65,12 +65,7 @@ func TestBitcoinConfig(t *testing.T) {
 	require.Equal(t, "0xB457BF68D71a17Fa5030269Fb895e29e6cD2DFF2", config.Bridge.ContractAddress)
 	require.Equal(t, "", config.Bridge.EthPrivKey)
 	require.Equal(t, "abi.json", config.Bridge.ABI)
-	require.Equal(t, false, config.Bridge.EnableEoaTransfer)
 	require.Equal(t, "127.0.0.1:8080/v1/btc/pubkey", config.Bridge.AAB2PI)
-	require.Equal(t, "127.0.0.1:8080", config.Bridge.AAParticleRPC)
-	require.Equal(t, "11111", config.Bridge.AAParticleProjectID)
-	require.Equal(t, "22222", config.Bridge.AAParticleServerKey)
-	require.Equal(t, 1102, config.Bridge.AAParticleChainID)
 	require.Equal(t, true, config.Eps.EnableEps)
 	require.Equal(t, "127.0.0.1", config.Eps.URL)
 	require.Equal(t, "", config.Eps.Authorization)
@@ -81,11 +76,6 @@ func TestBitcoinConfig(t *testing.T) {
 	require.Equal(t, []string{""}, config.Bridge.PublicKeys)
 	require.Equal(t, 0, config.Bridge.MultisigNum)
 	require.Equal(t, false, config.Bridge.EnableRollupListener)
-	require.Equal(t, false, config.Bridge.EnableVSM)
-	require.Equal(t, uint(10), config.Bridge.VSMInternalKeyIndex)
-	require.Equal(t, "abc", config.Bridge.VSMIv)
-	require.Equal(t, "aaa", config.Bridge.LocalDecryptKey)
-	require.Equal(t, "aes", config.Bridge.LocalDecryptAlg)
 }
 
 func TestBitcoinConfigEnv(t *testing.T) {
@@ -145,12 +135,7 @@ func TestBitcoinConfigEnv(t *testing.T) {
 	require.Equal(t, "0xB457BF68D71a17Fa5030269Fb895e29e6cD2DF22", config.Bridge.ContractAddress)
 	require.Equal(t, "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", config.Bridge.EthPrivKey)
 	require.Equal(t, "aaa.abi", config.Bridge.ABI)
-	require.Equal(t, true, config.Bridge.EnableEoaTransfer)
 	require.Equal(t, "127.1.1.1:1234/v1/btc/xx", config.Bridge.AAB2PI)
-	require.Equal(t, "192.168.1.1/aa", config.Bridge.AAParticleRPC)
-	require.Equal(t, "1234", config.Bridge.AAParticleProjectID)
-	require.Equal(t, "12345", config.Bridge.AAParticleServerKey)
-	require.Equal(t, 1101, config.Bridge.AAParticleChainID)
 	require.Equal(t, true, config.Eps.EnableEps)
 	require.Equal(t, "127.0.0.1", config.Eps.URL)
 	require.Equal(t, "", config.Eps.Authorization)
@@ -161,11 +146,6 @@ func TestBitcoinConfigEnv(t *testing.T) {
 	require.Equal(t, []string(nil), config.Bridge.PublicKeys)
 	require.Equal(t, 0, config.Bridge.MultisigNum)
 	require.Equal(t, false, config.Bridge.EnableRollupListener)
-	require.Equal(t, true, config.Bridge.EnableVSM)
-	require.Equal(t, uint(11), config.Bridge.VSMInternalKeyIndex)
-	require.Equal(t, "1111abc", config.Bridge.VSMIv)
-	require.Equal(t, "abcd", config.Bridge.LocalDecryptKey)
-	require.Equal(t, "rsa", config.Bridge.LocalDecryptAlg)
 }
 
 func TestChainParams(t *testing.T) {

@@ -1,4 +1,4 @@
-package bitcoin
+package indexer
 
 import (
 	"encoding/json"
@@ -23,14 +23,26 @@ const (
 	IndexBlockTimeout = 2 * time.Second
 )
 
+var (
+	ErrParsePkScript         = errors.New("parse pkscript err")
+	ErrDecodeListenAddress   = errors.New("decode listen address err")
+	ErrTargetConfirmations   = errors.New("target confirmation number was not reached")
+	ErrParsePubKey           = errors.New("parse pubkey failed, not found pubkey or nonsupport ")
+	ErrParsePkScriptNullData = errors.New("parse pkscript null data err")
+)
+
+const (
+	// tx type
+	TxTypeTransfer = "transfer" // btc transfer
+	TxTypeWithdraw = "withdraw" // btc withdraw
+)
+
 // IndexerService indexes transactions for json-rpc service.
 type IndexerService struct {
 	service.BaseService
-
 	txIdxr types.BITCOINTxIndexer
-
-	db  *gorm.DB
-	log log.Logger
+	db     *gorm.DB
+	log    log.Logger
 }
 
 // NewIndexerService returns a new service instance.
@@ -45,6 +57,42 @@ func NewIndexerService(
 	return is
 }
 
+func (bis *IndexerService) CheckDb() error {
+	if !bis.db.Migrator().HasTable(&model.Deposit{}) {
+		err := bis.db.AutoMigrate(&model.Deposit{})
+		if err != nil {
+			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
+			return err
+		}
+	}
+
+	if !bis.db.Migrator().HasTable(&model.BtcIndex{}) {
+		err := bis.db.AutoMigrate(&model.BtcIndex{})
+		if err != nil {
+			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
+			return err
+		}
+	}
+
+	if !bis.db.Migrator().HasTable(&model.Sinohope{}) {
+		err := bis.db.AutoMigrate(&model.Sinohope{})
+		if err != nil {
+			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
+			return err
+		}
+	}
+
+	if !bis.db.Migrator().HasTable(&model.RollupDeposit{}) {
+		err := bis.db.AutoMigrate(&model.RollupDeposit{})
+		if err != nil {
+			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
+			return err
+		}
+	}
+
+	return nil
+}
+
 // OnStart
 func (bis *IndexerService) OnStart() error {
 	latestBlock, err := bis.txIdxr.LatestBlock()
@@ -57,38 +105,6 @@ func (bis *IndexerService) OnStart() error {
 		currentBlock   int64 // index current block number
 		currentTxIndex int64 // index current block tx index
 	)
-	if !bis.db.Migrator().HasTable(&model.Deposit{}) {
-		err = bis.db.AutoMigrate(&model.Deposit{})
-		if err != nil {
-			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
-			return err
-		}
-	}
-
-	if !bis.db.Migrator().HasTable(&model.BtcIndex{}) {
-		err = bis.db.AutoMigrate(&model.BtcIndex{})
-		if err != nil {
-			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
-			return err
-		}
-	}
-
-	if !bis.db.Migrator().HasTable(&model.Sinohope{}) {
-		err = bis.db.AutoMigrate(&model.Sinohope{})
-		if err != nil {
-			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
-			return err
-		}
-	}
-
-	if !bis.db.Migrator().HasTable(&model.RollupDeposit{}) {
-		err = bis.db.AutoMigrate(&model.RollupDeposit{})
-		if err != nil {
-			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
-			return err
-		}
-	}
-
 	var btcIndex model.BtcIndex
 	if err := bis.db.First(&btcIndex, 1).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -113,14 +129,14 @@ func (bis *IndexerService) OnStart() error {
 	currentBlock = btcIndex.BtcIndexBlock
 	currentTxIndex = btcIndex.BtcIndexTx
 
-	ticker := time.NewTicker(NewBlockWaitTimeout)
+	//ticker := time.NewTicker(NewBlockWaitTimeout)
 	for {
 		bis.log.Infow("bitcoin indexer", "latestBlock",
 			latestBlock, "currentBlock", currentBlock, "currentTxIndex", currentTxIndex)
 
 		if latestBlock <= currentBlock {
-			<-ticker.C
-			ticker.Reset(NewBlockWaitTimeout)
+			//<-ticker.C
+			<-time.After(NewBlockWaitTimeout)
 
 			// update latest block
 			latestBlock, err = bis.txIdxr.LatestBlock()
@@ -157,7 +173,7 @@ func (bis *IndexerService) OnStart() error {
 				break
 			}
 			if len(txResults) > 0 {
-				currentBlock, currentTxIndex, err = bis.HandleResults(txResults, btcIndex, blockHeader.Timestamp, i)
+				currentBlock, currentTxIndex, err = bis.HandleResults(txResults, btcIndex, time.Unix(blockHeader.Time, 0), i)
 				if err != nil {
 					bis.log.Errorw("failed to handle results", "error", err,
 						"currentBlock", currentBlock, "currentTxIndex", currentTxIndex, "latestBlock", latestBlock)
@@ -248,7 +264,7 @@ func (bis *IndexerService) SaveParsedResult(
 				BtcBlockTime:   btcBlockTime,
 				B2TxRetry:      0,
 				ListenerStatus: model.ListenerStatusSuccess,
-				CallbackStatus: model.CallbackStatusPending,
+				CallbackStatus: model.CallbackStatusSuccess,
 			}
 			err = tx.Create(&deposit).Error
 			if err != nil {

@@ -1,15 +1,12 @@
-package bitcoin
+package indexer
 
 import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -19,11 +16,8 @@ import (
 	"github.com/b2network/b2-indexer/internal/config"
 	b2types "github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/aa"
-	b2crypto "github.com/b2network/b2-indexer/pkg/crypto"
 	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/b2network/b2-indexer/pkg/particle"
-	"github.com/b2network/b2-indexer/pkg/vsm"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -32,7 +26,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/go-resty/resty/v2"
 )
 
 var (
@@ -55,10 +48,10 @@ type Bridge struct {
 	B2ExplorerURL        string
 	logger               log.Logger
 	// particle aa
-	particle     *particle.Particle
-	bitcoinParam *chaincfg.Params
+	particle *particle.Particle
+	network  string
 	// eoa transfer switch
-	enableEoaTransfer bool
+	//enableEoaTransfer bool
 	// aa server
 	AAPubKeyAPI string
 }
@@ -73,7 +66,7 @@ type B2ExplorerStatus struct {
 var txLock sync.Mutex
 
 // NewBridge new bridge
-func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger, bitcoinParam *chaincfg.Params) (*Bridge, error) {
+func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger, network string) (*Bridge, error) {
 	rpcURL, err := url.ParseRequestURI(bridgeCfg.EthRPCURL)
 	if err != nil {
 		return nil, err
@@ -89,47 +82,19 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 		ABI = string(abiFile)
 	}
 
-	newParticle, err := particle.NewParticle(
-		bridgeCfg.AAParticleRPC,
-		bridgeCfg.AAParticleProjectID,
-		bridgeCfg.AAParticleServerKey,
-		bridgeCfg.AAParticleChainID)
-	if err != nil {
-		return nil, err
-	}
+	//newParticle, err := particle.NewParticle(
+	//	bridgeCfg.AAParticleRPC,
+	//	bridgeCfg.AAParticleProjectID,
+	//	bridgeCfg.AAParticleServerKey,
+	//	bridgeCfg.AAParticleChainID)
+	//if err != nil {
+	//	return nil, err
+	//}
 	ethPrivKey := bridgeCfg.EthPrivKey
-	if bridgeCfg.EnableVSM {
-		tassInputData, err := hex.DecodeString(ethPrivKey)
-		if err != nil {
-			return nil, err
-		}
-		decKey, _, err := vsm.TassSymmKeyOperation(vsm.TaDec, vsm.AlgAes256, tassInputData, []byte(bridgeCfg.VSMIv), bridgeCfg.VSMInternalKeyIndex)
-		if err != nil {
-			return nil, err
-		}
-		ethPrivKey = string(bytes.TrimRight(decKey, "\x00"))
-		if bridgeCfg.LocalDecryptAlg == b2crypto.AlgAes {
-			decEthPrivKey, err := hex.DecodeString(ethPrivKey)
-			if err != nil {
-				return nil, err
-			}
-			localKey, err := hex.DecodeString(bridgeCfg.LocalDecryptKey)
-			if err != nil {
-				return nil, err
-			}
-			localDecEthPrivKey, err := b2crypto.AesDecrypt(decEthPrivKey, localKey)
-			if err != nil {
-				return nil, err
-			}
-			ethPrivKey = string(localDecEthPrivKey)
-		} else if bridgeCfg.LocalDecryptAlg == b2crypto.AlgRsa {
-			localDecEthPrivKey, err := b2crypto.RsaDecryptHex(ethPrivKey, bridgeCfg.LocalDecryptKey)
-			if err != nil {
-				return nil, err
-			}
-			ethPrivKey = localDecEthPrivKey
-		}
-	}
+
+	//todo temp
+	//bridgeCfg.EnableVSM = false
+
 	if has0xPrefix(ethPrivKey) {
 		ethPrivKey = ethPrivKey[2:]
 	}
@@ -139,14 +104,14 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 	}
 	log.Infof("load eth address: %s", crypto.PubkeyToAddress(privateKey.PublicKey))
 	return &Bridge{
-		EthRPCURL:            rpcURL.String(),
-		ContractAddress:      common.HexToAddress(bridgeCfg.ContractAddress),
-		EthPrivKey:           privateKey,
-		ABI:                  ABI,
-		logger:               log,
-		particle:             newParticle,
-		bitcoinParam:         bitcoinParam,
-		enableEoaTransfer:    bridgeCfg.EnableEoaTransfer,
+		EthRPCURL:       rpcURL.String(),
+		ContractAddress: common.HexToAddress(bridgeCfg.ContractAddress),
+		EthPrivKey:      privateKey,
+		ABI:             ABI,
+		logger:          log,
+		particle:        nil,
+		network:         network,
+		//enableEoaTransfer:    bridgeCfg.EnableEoaTransfer,
 		AAPubKeyAPI:          bridgeCfg.AAB2PI,
 		BaseGasPriceMultiple: bridgeCfg.GasPriceMultiple,
 		B2ExplorerURL:        bridgeCfg.B2ExplorerURL,
@@ -157,6 +122,7 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 func (b *Bridge) Deposit(
 	hash string,
 	bitcoinAddress b2types.BitcoinFrom,
+	tos string,
 	amount int64,
 	oldTx *types.Transaction,
 	nonce uint64,
@@ -172,12 +138,15 @@ func (b *Bridge) Deposit(
 
 	ctx := context.Background()
 
-	toAddress, err := b.BitcoinAddressToEthAddress(bitcoinAddress)
-	if err != nil {
-		return nil, nil, "", "", fmt.Errorf("btc address to eth address err:%w", err)
-	}
+	//toAddress, err := b.BitcoinAddressToEthAddress(hash, bitcoinAddress)
+	//if err != nil {
+	//	return nil, nil, "", "", fmt.Errorf("btc address to eth address err:%w", err)
+	//}
 
-	data, err := b.ABIPack(b.ABI, "deposit", common.HexToHash(hash), common.HexToAddress(toAddress), new(big.Int).SetInt64(amount))
+	//todo test case
+	toAddress := "0xdac17f958d2ee523a2206206994597c13d831ec7"
+
+	data, err := b.ABIPack(b.ABI, "depositV2", common.HexToHash(hash), common.HexToAddress(toAddress), new(big.Int).SetInt64(amount))
 	if err != nil {
 		return nil, nil, toAddress, "", fmt.Errorf("abi pack err:%w", err)
 	}
@@ -194,6 +163,8 @@ func (b *Bridge) Deposit(
 	if err != nil {
 		return nil, nil, toAddress, "", err
 	}
+
+	b.logger.Infof("deposit success: hash:%v", tx.Hash().String())
 
 	return tx, data, toAddress, b.FromAddress(), nil
 }
@@ -212,7 +183,7 @@ func (b *Bridge) Transfer(bitcoinAddress b2types.BitcoinFrom,
 
 	ctx := context.Background()
 
-	toAddress, err := b.BitcoinAddressToEthAddress(bitcoinAddress)
+	toAddress, err := b.BitcoinAddressToEthAddress("", bitcoinAddress)
 	if err != nil {
 		return nil, "", fmt.Errorf("btc address to eth address err:%w", err)
 	}
@@ -255,6 +226,7 @@ func (b *Bridge) sendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey
 		return nil, err
 	}
 	fromAddress := crypto.PubkeyToAddress(fromPriv.PublicKey)
+
 	nonce, err := client.PendingNonceAt(ctx, fromAddress)
 	if err != nil {
 		return nil, err
@@ -274,27 +246,10 @@ func (b *Bridge) sendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey
 		}
 		nonce = oldNonce
 	}
+
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
 		return nil, err
-	}
-	// TODO: temp fix
-	// first use b2 explorer stats gas price
-	// if fail, use base gas price
-	newGasPrice, err := b.gasPrices()
-	if err != nil {
-		b.logger.Errorf("get price err:%v", err.Error())
-		if b.BaseGasPriceMultiple != 0 {
-			gasPrice.Mul(gasPrice, big.NewInt(b.BaseGasPriceMultiple))
-		}
-	} else {
-		if newGasPrice.Cmp(big.NewInt(0)) == 0 {
-			if b.BaseGasPriceMultiple != 0 {
-				gasPrice.Mul(gasPrice, big.NewInt(b.BaseGasPriceMultiple))
-			}
-		} else {
-			gasPrice = newGasPrice
-		}
 	}
 
 	actualGasPrice := new(big.Int).Set(gasPrice)
@@ -302,6 +257,7 @@ func (b *Bridge) sendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey
 	b.logger.Infof("gas price:%v", actualGasPrice.String())
 	b.logger.Infof("nonce:%v", nonce)
 	b.logger.Infof("from address:%v", fromAddress)
+	b.logger.Infof("to address:%v", toAddress.Hex())
 	callMsg := ethereum.CallMsg{
 		From:     fromAddress,
 		To:       &toAddress,
@@ -316,23 +272,24 @@ func (b *Bridge) sendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey
 	// use eth_estimateGas only check deposit err
 	gas, err := client.EstimateGas(ctx, callMsg)
 	if err != nil {
-		// Other errors may occur that need to be handled
-		// The estimated gas cannot block the sending of a transaction
-		b.logger.Errorw("estimate gas err", "error", err.Error())
-		if strings.Contains(err.Error(), ErrBridgeDepositTxHashExist.Error()) {
-			return nil, ErrBridgeDepositTxHashExist
-		}
-
-		if strings.Contains(err.Error(), ErrBridgeDepositContractInsufficientBalance.Error()) {
-			return nil, ErrBridgeDepositContractInsufficientBalance
-		}
-
-		if strings.Contains(err.Error(), ErrBridgeFromGasInsufficient.Error()) {
-			return nil, ErrBridgeFromGasInsufficient
-		}
-
-		// estimate gas err, return, try again
-		return nil, err
+		//	// Other errors may occur that need to be handled
+		//	// The estimated gas cannot block the sending of a transaction
+		//	b.logger.Errorw("estimate gas err", "error", err.Error())
+		//	if strings.Contains(err.Error(), ErrBridgeDepositTxHashExist.Error()) {
+		//		return nil, ErrBridgeDepositTxHashExist
+		//	}
+		//
+		//	if strings.Contains(err.Error(), ErrBridgeDepositContractInsufficientBalance.Error()) {
+		//		return nil, ErrBridgeDepositContractInsufficientBalance
+		//	}
+		//
+		//	if strings.Contains(err.Error(), ErrBridgeFromGasInsufficient.Error()) {
+		//		return nil, ErrBridgeFromGasInsufficient
+		//	}
+		//
+		//	// estimate gas err, return, try again
+		//	return nil, err
+		gas = 30000
 	}
 	gas *= 2
 	legacyTx := types.LegacyTx{
@@ -478,31 +435,33 @@ func (b *Bridge) ABIPack(abiData string, method string, args ...interface{}) ([]
 }
 
 // BitcoinAddressToEthAddress bitcoin address to eth address
-func (b *Bridge) BitcoinAddressToEthAddress(bitcoinAddress b2types.BitcoinFrom) (string, error) {
-	pubkeyResp, err := aa.GetPubKey(b.AAPubKeyAPI, bitcoinAddress.Address)
+func (b *Bridge) BitcoinAddressToEthAddress(hash string, bitcoinAddress b2types.BitcoinFrom) (string, error) {
+	pubKeyResp, err := aa.GetPubKey(b.AAPubKeyAPI, hash, bitcoinAddress.Address, b.network)
 	if err != nil {
-		b.logger.Errorw("get pub key:", "pubkey", pubkeyResp, "address", bitcoinAddress.Address)
+		b.logger.Errorw("get pub key:", "pubKeyResp", pubKeyResp, "address", bitcoinAddress.Address)
 		return "", err
 	}
-	if pubkeyResp.Code != "0" {
-		if pubkeyResp.Code == aa.AddressNotFoundErrCode {
-			return "", ErrAAAddressNotFound
-		}
-		return "", fmt.Errorf("get pubkey code err:%v", pubkeyResp)
-	}
+	//if pubkeyResp.Code != "0" {
+	//	if pubkeyResp.Code == aa.AddressNotFoundErrCode {
+	//		return "", ErrAAAddressNotFound
+	//	}
+	//	return "", fmt.Errorf("get pubkey code err:%v", pubkeyResp)
+	//}
+	//
+	//b.logger.Infow("get pub key:", "pubkey", pubkeyResp, "address", bitcoinAddress.Address)
+	//aaBtcAccount, err := b.particle.AAGetBTCAccount([]string{pubkeyResp.Data.Pubkey})
+	//if err != nil {
+	//	return "", err
+	//}
+	//
+	//if len(aaBtcAccount.Result) != 1 {
+	//	b.logger.Errorw("AAGetBTCAccount", "result", aaBtcAccount)
+	//	return "", fmt.Errorf("AAGetBTCAccount result not match")
+	//}
+	//b.logger.Infow("AAGetBTCAccount", "result", aaBtcAccount.Result[0])
+	//return aaBtcAccount.Result[0].SmartAccountAddress, nil
 
-	b.logger.Infow("get pub key:", "pubkey", pubkeyResp, "address", bitcoinAddress.Address)
-	aaBtcAccount, err := b.particle.AAGetBTCAccount([]string{pubkeyResp.Data.Pubkey})
-	if err != nil {
-		return "", err
-	}
-
-	if len(aaBtcAccount.Result) != 1 {
-		b.logger.Errorw("AAGetBTCAccount", "result", aaBtcAccount)
-		return "", fmt.Errorf("AAGetBTCAccount result not match")
-	}
-	b.logger.Infow("AAGetBTCAccount", "result", aaBtcAccount.Result[0])
-	return aaBtcAccount.Result[0].SmartAccountAddress, nil
+	return pubKeyResp.Data.Pubkey, nil
 }
 
 // WaitMined wait tx mined
@@ -550,32 +509,7 @@ func (b *Bridge) TransactionByHash(hash string) (*types.Transaction, bool, error
 }
 
 func (b *Bridge) EnableEoaTransfer() bool {
-	return b.enableEoaTransfer
-}
-
-func (b *Bridge) gasPrices() (*big.Int, error) {
-	client := resty.New()
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		Get(b.B2ExplorerURL + "/api/v2/stats")
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("get gas price error, status code: %d", resp.StatusCode())
-	}
-
-	stats := &B2ExplorerStatus{}
-
-	b.logger.Infof("b2 explorer status:%v", string(resp.Body()))
-	err = json.Unmarshal(resp.Body(), stats)
-	if err != nil {
-		return nil, err
-	}
-	gasPriceWei := new(big.Float).Mul(big.NewFloat(stats.GasPrices.Average), big.NewFloat(1e9))
-	gasPriceInt := new(big.Int)
-	gasPriceWei.Int(gasPriceInt)
-	return gasPriceInt, nil
+	return false
 }
 
 func (b *Bridge) FromAddress() string {

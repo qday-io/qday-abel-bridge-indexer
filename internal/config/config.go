@@ -60,18 +60,10 @@ type BridgeConfig struct {
 	ContractAddress string `mapstructure:"contract-address" env:"BITCOIN_BRIDGE_CONTRACT_ADDRESS"`
 	// ABI defines the l1 -> l2 bridge contract abi
 	ABI string `mapstructure:"abi" env:"BITCOIN_BRIDGE_ABI"`
-	// if deposit invoke b2 failed(status != 1), Whether to allow invoke eoa trnasfer
-	EnableEoaTransfer bool `mapstructure:"enable-eoa-transfer" env:"BITCOIN_BRIDGE_ENABLE_EOA_TRANSFER" envDefault:"true"`
+
 	// AAB2PI get pubkey by btc address
 	AAB2PI string `mapstructure:"aa-b2-api" env:"BITCOIN_BRIDGE_AA_B2_API"`
-	// AAParticleRPC defines the particle api
-	AAParticleRPC string `mapstructure:"aa-particle-rpc" env:"BITCOIN_BRIDGE_AA_PARTICLE_RPC"`
-	// AAParticleProjectID defines the particle project id
-	AAParticleProjectID string `mapstructure:"aa-particle-project-id" env:"BITCOIN_BRIDGE_AA_PARTICLE_PROJECT_ID"`
-	// AAParticleServerKey defines the particle server key
-	AAParticleServerKey string `mapstructure:"aa-particle-server-key" env:"BITCOIN_BRIDGE_AA_PARTICLE_SERVER_KEY"`
-	// AAParticleChainID defines the particle chain id
-	AAParticleChainID int `mapstructure:"aa-particle-chain-id" env:"BITCOIN_BRIDGE_AA_PARTICLE_CHAIN_ID"`
+
 	// GasPriceMultiple defines the gas price multiple, TODO: temp fix, base gas_price * n
 	GasPriceMultiple int64 `mapstructure:"gas-price-multiple" env:"BITCOIN_BRIDGE_GAS_PRICE_MULTIPLE" envDefault:"2"`
 	// B2ExplorerURL defines the b2 explorer url, TODO: temp use explorer gas prices
@@ -92,16 +84,6 @@ type BridgeConfig struct {
 	MultisigNum int `mapstructure:"multisig-num" env:"BITCOIN_BRIDGE_MULTISIG_NUM"`
 	// EnableRollupListener defines rollup index server
 	EnableRollupListener bool `mapstructure:"enable-rollup-listener" env:"BITCOIN_BRIDGE_ROLLUP_ENABLE_LISTENER"`
-	// EnableVSM defines whether to enable the vsm encryption/decryption
-	EnableVSM bool `mapstructure:"enable-vsm" env:"BITCOIN_BRIDGE_ENABLE_VSM"`
-	// VSMInternalKeyIndex defines the vsm internal key index
-	VSMInternalKeyIndex uint `mapstructure:"vsm-internal-key-index" env:"BITCOIN_BRIDGE_VSM_INTERNAL_KEY_INDEX"`
-	// VSMIv defines the vsm iv
-	VSMIv string `mapstructure:"vsm-iv" env:"BITCOIN_BRIDGE_VSM_IV"`
-	// LocalDecryptKey defines the bridge server local enc key
-	LocalDecryptKey string `mapstructure:"local-decrypt-key" env:"BITCOIN_BRIDGE_LOCAL_DECRYPT_KEY"`
-	// LocalAesAlg defines the bridge server local dec alg, rsa aes
-	LocalDecryptAlg string `mapstructure:"local-decrypt-alg" env:"BITCOIN_BRIDGE_LOCAL_DECRYPT_ALG"`
 }
 
 // TODO: @robertcc0410 env prefix, mapstructure and env,  env prefix in the rule must be the same
@@ -192,42 +174,6 @@ func LoadBitcoinConfig(homePath string) (*BitcoinConfig, error) {
 	return &config, nil
 }
 
-// ChainParams get chain params by network name
-func ChainParams(network string) *chaincfg.Params {
-	switch network {
-	case chaincfg.MainNetParams.Name:
-		return &chaincfg.MainNetParams
-	case chaincfg.TestNet3Params.Name:
-		return &chaincfg.TestNet3Params
-	case chaincfg.SigNetParams.Name:
-		return &chaincfg.SigNetParams
-	case chaincfg.SimNetParams.Name:
-		return &chaincfg.SimNetParams
-	case chaincfg.RegressionNetParams.Name:
-		return &chaincfg.RegressionNetParams
-	default:
-		return &chaincfg.TestNet3Params
-	}
-}
-
-func DefaultConfig() *Config {
-	return &Config{
-		RootDir:  "",
-		LogLevel: "info",
-	}
-}
-
-func DefaultBitcoinConfig() *BitcoinConfig {
-	return &BitcoinConfig{
-		EnableIndexer: false,
-		NetworkName:   "mainnet",
-		RPCHost:       "127.0.0.1",
-		RPCUser:       "",
-		RPCPass:       "",
-		RPCPort:       "8332",
-	}
-}
-
 func LoadHTTPConfig(homePath string) (*HTTPConfig, error) {
 	config := HTTPConfig{}
 	configFile := path.Join(homePath, HTTPConfigFileName)
@@ -257,4 +203,40 @@ func LoadHTTPConfig(homePath string) (*HTTPConfig, error) {
 	}
 
 	return &config, nil
+}
+
+// ChainParams get chain params by network name
+func ChainParams(network string) *chaincfg.Params {
+	switch network {
+	case chaincfg.MainNetParams.Name:
+		return &chaincfg.MainNetParams
+	case chaincfg.TestNet3Params.Name:
+		return &chaincfg.TestNet3Params
+	case chaincfg.SigNetParams.Name:
+		return &chaincfg.SigNetParams
+	case chaincfg.SimNetParams.Name:
+		return &chaincfg.SimNetParams
+	case chaincfg.RegressionNetParams.Name:
+		return &chaincfg.RegressionNetParams
+	default:
+		return &chaincfg.TestNet3Params
+	}
+}
+
+func DefaultConfig() *Config {
+	return &Config{
+		RootDir:  "",
+		LogLevel: "info",
+	}
+}
+
+func DefaultBitcoinConfig() *BitcoinConfig {
+	return &BitcoinConfig{
+		EnableIndexer: false,
+		NetworkName:   "testnet3",
+		RPCHost:       "https://bitcoin-testnet.drpc.org",
+		RPCUser:       "",
+		RPCPass:       "",
+		RPCPort:       "",
+	}
 }

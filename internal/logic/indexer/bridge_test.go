@@ -1,4 +1,4 @@
-package bitcoin_test
+package indexer_test
 
 import (
 	"context"
@@ -10,12 +10,12 @@ import (
 	"os"
 	"path"
 	"testing"
-	"time"
 
 	"github.com/b2network/b2-indexer/internal/config"
-	"github.com/b2network/b2-indexer/internal/logic/bitcoin"
+	"github.com/b2network/b2-indexer/internal/logic/indexer"
 	b2types "github.com/b2network/b2-indexer/internal/types"
-	"github.com/b2network/b2-indexer/pkg/log"
+	logger "github.com/b2network/b2-indexer/pkg/log"
+	"github.com/b2network/b2committer/pkg/log"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/ethereum/go-ethereum"
@@ -28,7 +28,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewBridge(t *testing.T) {
+func newLogger(name string) logger.Logger {
+	bridgeB2NodeLoggerOpt := logger.NewOptions()
+	bridgeB2NodeLoggerOpt.Format = "console"
+	bridgeB2NodeLoggerOpt.Level = "info"
+	bridgeB2NodeLoggerOpt.EnableColor = true
+	bridgeB2NodeLoggerOpt.Name = name
+	bridgeB2NodeLogger := logger.New(bridgeB2NodeLoggerOpt)
+	return bridgeB2NodeLogger
+}
+
+func init2(t *testing.T) *indexer.Bridge {
 	abiPath := path.Join("./testdata")
 
 	ABI := ""
@@ -41,29 +51,22 @@ func TestNewBridge(t *testing.T) {
 		ABI = string(abi)
 	}
 
-	privateKey, err := crypto.HexToECDSA("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+	bridgeCfg := config.BridgeConfig{
+		EthRPCURL:       "http://124.243.137.251:8123",
+		ContractAddress: "0xDB6a51588433f0366082330aCFa8d2b7a1a5400A",
+		EthPrivKey:      "8623eb1173b001788b7dc789513c34d049a3d02c728b50daae5799fca009e111",
+		ABI:             ABI,
+	}
+
+	log := newLogger("[bridge]")
+
+	bridge, err := indexer.NewBridge(bridgeCfg, abiPath, log, "testnet")
+
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	bridgeCfg := config.BridgeConfig{
-		EthRPCURL:           "http://localhost:8545",
-		ContractAddress:     "0x123456789abcdef",
-		EthPrivKey:          "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-		ABI:                 "abi.json",
-		AAParticleRPC:       "http://localhost:8545",
-		AAParticleProjectID: "1111",
-		AAParticleServerKey: "",
-		AAParticleChainID:   1102,
-	}
-
-	bridge, err := bitcoin.NewBridge(bridgeCfg, abiPath, log.NewNopLogger(), &chaincfg.TestNet3Params)
-	assert.NoError(t, err)
-	assert.NotNil(t, bridge)
-	assert.Equal(t, bridgeCfg.EthRPCURL, bridge.EthRPCURL)
-	assert.Equal(t, common.HexToAddress("0x123456789abcdef"), bridge.ContractAddress)
-	assert.Equal(t, privateKey, bridge.EthPrivKey)
-	assert.Equal(t, ABI, bridge.ABI)
+	return bridge
 }
 
 // TestLocalTransfer only test in local
@@ -105,44 +108,6 @@ func TestLocalTransfer(t *testing.T) {
 	}
 }
 
-// TestLocalBitcoinAddressToEthAddress only test in local
-func TestLocalBitcoinAddressToEthAddress(t *testing.T) {
-	bridge := bridgeWithConfig(t)
-	testCase := []struct {
-		name           string
-		bitcoinAddress b2types.BitcoinFrom
-		wantErr        bool
-	}{
-		{
-			name: "success",
-			bitcoinAddress: b2types.BitcoinFrom{
-				Address: "1McUczq9Cq8DL1YwaQCr6nSseuEBkpQdBh",
-			},
-			wantErr: false,
-		},
-		{
-			name: "pubkey fail",
-			bitcoinAddress: b2types.BitcoinFrom{
-				Address: "1McUczq9Cq8DL1YwaQCr6nSseuEBkpQdBh",
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tc := range testCase {
-		t.Run(tc.name, func(t *testing.T) {
-			ethAddress, err := bridge.BitcoinAddressToEthAddress(tc.bitcoinAddress)
-			if (err != nil) != tc.wantErr {
-				t.Errorf("TestLocalBitcoinAddressToEthAddress() error = %v, wantErr %v", err, tc.wantErr)
-				return
-			}
-			if !common.IsHexAddress(ethAddress) {
-				t.Errorf("bitcoinAddress: %s, ethAddress: %s", tc.bitcoinAddress, ethAddress)
-			}
-		})
-	}
-}
-
 func TestABIPack(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		abiData, err := os.ReadFile(path.Join("./testdata", "abi.json"))
@@ -159,7 +124,7 @@ func TestABIPack(t *testing.T) {
 		}
 
 		// Create a mock bridge object
-		b := &bitcoin.Bridge{}
+		b := &indexer.Bridge{}
 
 		// Call the ABIPack method
 		result, err := b.ABIPack(string(abiData), expectedMethod, expectedArgs...)
@@ -177,7 +142,7 @@ func TestABIPack(t *testing.T) {
 		expectedError := errors.New("unexpected EOF")
 
 		// Create a mock bridge object
-		b := &bitcoin.Bridge{}
+		b := &indexer.Bridge{}
 
 		// Call the ABIPack method
 		_, err := b.ABIPack(abiData, "method", "arg1", "arg2")
@@ -186,70 +151,12 @@ func TestABIPack(t *testing.T) {
 	})
 }
 
-func bridgeWithConfig(t *testing.T) *bitcoin.Bridge {
+func bridgeWithConfig(t *testing.T) *indexer.Bridge {
 	config, err := config.LoadBitcoinConfig("")
 	require.NoError(t, err)
-	bridge, err := bitcoin.NewBridge(config.Bridge, "./", log.NewNopLogger(), &chaincfg.TestNet3Params)
+	bridge, err := indexer.NewBridge(config.Bridge, "./", logger.NewNopLogger(), chaincfg.TestNet3Params.Name)
 	require.NoError(t, err)
 	return bridge
-}
-
-func TestLocalDepositWaitMined(t *testing.T) {
-	bridge := bridgeWithConfig(t)
-	uuid := randHash(t)
-	address := b2types.BitcoinFrom{
-		Address: "tb1qjda2l5spwyv4ekwe9keddymzuxynea2m2kj0qy1",
-	}
-	value := 123
-	bigValue := 11111111111111111
-
-	// params check
-	_, _, _, _, err := bridge.Deposit("", address, int64(value), nil, 0, false)
-	if err != nil {
-		assert.EqualError(t, errors.New("tx id is empty"), err.Error())
-	}
-	_, _, _, _, err = bridge.Deposit(uuid, b2types.BitcoinFrom{}, int64(value), nil, 0, false)
-	if err != nil {
-		assert.EqualError(t, errors.New("bitcoin address is empty"), err.Error())
-	}
-
-	// normal
-	b2Tx, _, _, _, err := bridge.Deposit(uuid, address, int64(value), nil, 0, false)
-	if err != nil {
-		assert.NoError(t, err)
-	}
-	_, err = bridge.WaitMined(context.Background(), b2Tx, nil)
-	if err != nil {
-		assert.NoError(t, err)
-	}
-
-	// uuid check
-	_, _, _, _, err = bridge.Deposit(uuid, address, int64(value), nil, 0, false)
-	if err != nil {
-		assert.EqualError(t, bitcoin.ErrBridgeDepositTxHashExist, err.Error())
-	}
-
-	// insufficient balance
-	_, _, _, _, err = bridge.Deposit(randHash(t), address, int64(bigValue), nil, 0, false)
-	if err != nil {
-		assert.EqualError(t, bitcoin.ErrBridgeDepositContractInsufficientBalance, err.Error())
-	} else {
-		t.Fatal("insufficient balance check failed")
-	}
-
-	// context timeout
-	b2Tx2, _, _, _, err := bridge.Deposit(randHash(t), address, int64(value), nil, 0, false)
-	if err != nil {
-		assert.NoError(t, err)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Millisecond)
-	defer cancel()
-	_, err = bridge.WaitMined(ctx, b2Tx2, nil)
-	if err != nil {
-		assert.EqualError(t, context.DeadlineExceeded, err.Error())
-	} else {
-		t.Fatal("context deadline check failed")
-	}
 }
 
 // func TestLocalTransactionByHash(t *testing.T) {
@@ -283,12 +190,11 @@ func randHash(t *testing.T) string {
 func TestLocalBatchRestNonce(t *testing.T) {
 	config, err := config.LoadBitcoinConfig("")
 	require.NoError(t, err)
-	config.Bridge.EnableVSM = false
 	// custom rpc key gas price
 	// config.Bridge.GasPriceMultiple = 3
 	// config.Bridge.EthRPCURL = ""
 	// config.Bridge.EthPrivKey = ""
-	bridge, err := bitcoin.NewBridge(config.Bridge, "./", log.NewNopLogger(), &chaincfg.TestNet3Params)
+	bridge, err := indexer.NewBridge(config.Bridge, "./", logger.NewNopLogger(), chaincfg.TestNet3Params.Name)
 	privateKey, err := crypto.HexToECDSA(config.Bridge.EthPrivKey)
 	require.NoError(t, err)
 	ctx := context.Background()
@@ -386,4 +292,34 @@ func testSendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey,
 	}
 
 	return signedTx, nil
+}
+
+func TestBridge_Deposit(t *testing.T) {
+	b := init2(t)
+	hash := "0x8af2e0edf453c7a43ca3a8fc8661041b18ae5a67b111e0e0f3edcf8285950029"
+	//hex.EncodeToString()
+	from := b2types.BitcoinFrom{
+		Address: "0xCB369d06BD0aaA813E1d6bad09421D53bB96D175",
+	}
+
+	client, err := ethclient.Dial(b.EthRPCURL)
+	if err != nil {
+		panic(err)
+	}
+	fromAddress := crypto.PubkeyToAddress(b.EthPrivKey.PublicKey)
+	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+
+	log.Infof("from address:%v", fromAddress.Hex(), nonce)
+
+	tos := "[{\"Value\": 16, \"Address\": \"0x1111111254fb6c44bAC0beD2854e76F90643097d\"}]"
+
+	b2Tx, _, aaAddress, fromAddr, err := b.Deposit(hash, from, tos, 150000000000, nil, nonce, false)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("b2tx:%v", b2Tx.Hash().String())
+	t.Logf("receiptAddress:%v \n", aaAddress)
+	t.Logf("fromAddr:%v\n", fromAddr)
 }

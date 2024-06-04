@@ -1,0 +1,44 @@
+network-name = "testnet"
+rpc-host = "testnet-rpc-00.abelian.info"
+rpc-port = ""
+rpc-user = "J8y0OnkS2wx9XEgUlW5MqtoRDAQ="
+rpc-pass = "ULlXc/ZMJ375cn6VuSbtU+Y3KGQ="
+disable-tls = false
+wallet-name = ""
+enable-indexer = true
+indexer-listen-address = "abe338ce0ce178fb0aca42b4e400cdf395c92cbf9c5c9abd678aa516835f697bd6d280b285815924f862352c5463421c9f8d247f65dc112aa04c25de925bd1d1a334"
+indexer-listen-target-confirmations = 1
+
+[bridge]
+eth-rpc-url = "http://124.243.137.251:8123"
+#eth-priv-key = "0x267ecea4fb57a83dd164e6b27af977ac6898743daaeff1127040f1c0722b6286"
+#contract-address = "0xcbB599174AF426C2D71402C21DeeC31238a8F27A"
+eth-priv-key = "8623eb1173b001788b7dc789513c34d049a3d02c728b50daae5799fca009e111"
+contract-address = "0xD4074af496C9e1B44b8f26675848cDEb1C3b4ecB"
+abi = ""
+enable-eoa-transfer = false
+aa-b2-api = "http://190.92.213.101:9002"
+aa-particle-rpc = "https://rpc.particle.network/evm-chain"
+aa-particle-project-id = "11111"
+aa-particle-server-key = "22222"
+aa-particle-chain-id = 1102
+gas-price-multiple = 2
+b2-explorer-url = ""
+enable-withdraw-listener = false
+deposit = ""
+withdraw = ""
+unisat-api-key = ""
+publickeys = []
+time-interval = 10
+multisig-num = 0
+enable-rollup-listener = false
+enable-vsm = false
+vsm-internal-key-index = 0
+vsm-iv = ""
+local-decrypt-key = ""
+local-decrypt-alg = ""
+
+[eps]
+enable-eps = false
+url = ""
+authorization = ""

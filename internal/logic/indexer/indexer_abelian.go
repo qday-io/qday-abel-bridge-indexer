@@ -244,7 +244,12 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 	if listenAddress == toAddress {
 		hasListenAddress = true
 	}
-	totalValue, _ := strconv.ParseInt(m.Value, 0, 64)
+	totalValue, err := strconv.ParseInt(m.Value, 0, 64)
+
+	if err != nil {
+		b.logger.Errorf("ParseInt value error:%v,txId:%v,memo:%v", err, txResult.TxID, string(memo))
+		return nil, nil
+	}
 
 	tos := make([]types.BitcoinTo, 0)
 	parseTo := types.BitcoinTo{

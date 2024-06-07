@@ -24,9 +24,10 @@ func init2() *AbelianIndexer {
 func TestAbelianIndexer_ParseBlock(t *testing.T) {
 	b := init2()
 
-	txs, block, err := b.ParseBlock(286934, 0)
+	txs, block, err := b.ParseBlock(289922, 0)
 	if err != nil {
 		t.Fatal(err)
+		return
 	}
 
 	t.Logf("txs: %v block: %v", txs[0], block)

@@ -56,11 +56,12 @@ func init2(t *testing.T) *indexer.Bridge {
 		ContractAddress: "0xDB6a51588433f0366082330aCFa8d2b7a1a5400A",
 		EthPrivKey:      "8623eb1173b001788b7dc789513c34d049a3d02c728b50daae5799fca009e111",
 		ABI:             ABI,
+		AAB2PI:          "https://deposit-test.qday.ninja:9002",
 	}
 
 	log := newLogger("[bridge]")
 
-	bridge, err := indexer.NewBridge(bridgeCfg, abiPath, log, "testnet")
+	bridge, err := indexer.NewBridge(bridgeCfg, abiPath, log, "Abelian Testnetwork")
 
 	if err != nil {
 		t.Fatal(err)
@@ -296,10 +297,10 @@ func testSendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey,
 
 func TestBridge_Deposit(t *testing.T) {
 	b := init2(t)
-	hash := "0x8af2e0edf453c7a43ca3a8fc8661041b18ae5a67b111e0e0f3edcf8285950029"
+	hash := "4cd7a9634158d12e21bc5ce9aae0f36299a1cfc775c5b378f72876d003b6cedf"
 	//hex.EncodeToString()
 	from := b2types.BitcoinFrom{
-		Address: "0xCB369d06BD0aaA813E1d6bad09421D53bB96D175",
+		Address: "abe36f503e14f9fe13950e009d89de269031aab054223858cc4241224b95c9fd0bed381d445ca1077b69f4bd12faa2248797f6edaee7d4777ff1a6366f3a46d198d8",
 	}
 
 	client, err := ethclient.Dial(b.EthRPCURL)

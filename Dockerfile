@@ -1,11 +1,26 @@
-FROM golang:latest as builder
-COPY . /src
-RUN cd /src && \
-    GO111MODULE=on CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o ./build/main main.go
+FROM golang:1.21.4  as builder
+ENV CGO_ENABLED 0
+ENV GOPROXY https://goproxy.cn,direct
+RUN cd / && mkdir app
+WORKDIR /app
+COPY ./go.mod .
+COPY ./go.sum .
+RUN go mod download
+COPY . /app
+RUN  go build -ldflags '-s -w' -o ./build/abe-indexer main.go
 
 # =====
-FROM ubuntu:latest
-RUN apt-get update && apt-get install -y ca-certificates
-COPY --from=builder /src/pkg/vsm/libgvsm/linux64/libTassSDF4GHVSM.so /usr/lib/libTassSDF4GHVSM.so
-COPY --from=builder /src/pkg/vsm/libgvsm/cfg/tassConfig.ini /usr/etc/tassConfig.ini
-COPY --from=builder /src/build/main /usr/bin/main
+FROM alpine:3.18.0
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/cadok-certificates.crt
+COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai
+ENV TZ Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+WORKDIR /app
+
+COPY --from=builder /app/build/abe-indexer /app/abe-indexer
+
+EXPOSE 9090 9091
+VOLUME /app
+CMD ["/app/abe-indexer"]

@@ -1,4 +1,4 @@
-## b2-indexer
+## abe-indexer
 
 ## Usage
 
@@ -8,16 +8,16 @@ build
 make build
 ```
 
-b2-indexer
+abe-indexer
 
 ```
-./build/b2-indexer start
+./build/abe-indexer start
 ```
 
-b2-indexer-api
+abe-indexer-api
 
 ```
-./build/b2-indexer http
+./build/abe-indexer http
 ```
 
 ## Resources

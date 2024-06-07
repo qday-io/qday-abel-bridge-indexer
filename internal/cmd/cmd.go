@@ -26,9 +26,9 @@ func Execute() {
 
 func rootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:   "b2-indexer",
+		Use:   "abe-indexer",
 		Short: "index tx",
-		Long:  "b2-indexer is a application that index bitcoin tx",
+		Long:  "abe-indexer is a application that index bitcoin tx",
 		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 			ctx := context.Background()
 			ctx = context.WithValue(ctx, types.ServerContextKey, handler.NewDefaultContext())

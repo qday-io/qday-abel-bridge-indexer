@@ -1,6 +1,6 @@
 BUILDDIR ?= $(CURDIR)/build
-NAMESPACE := ghcr.io/b2network
-PROJECT := b2-indexer
+NAMESPACE := ghcr.io/abelianl2
+PROJECT := abe-indexer
 DOCKER_IMAGE := $(NAMESPACE)/$(PROJECT)
 COMMIT_HASH := $(shell git rev-parse --short=7 HEAD)
 DATE=$(shell date +%Y%m%d-%H%M%S)

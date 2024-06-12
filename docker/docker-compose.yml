@@ -24,10 +24,12 @@ services:
     image: ghcr.io/abelianl2/abe-indexer:0.1.0
     restart: always
     volumes:
-      - ./config:/app
+      - ./config:/app/config
     ports:
       - 9090:9090
       - 9091:9091
     command:
       - /app/abe-indexer
       - start
+      - --home
+      - /app/config

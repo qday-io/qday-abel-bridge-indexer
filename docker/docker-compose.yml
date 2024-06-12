@@ -19,33 +19,15 @@ services:
       - POSTGRES_DB=abe_indexer
     ports:
       - 5432:5432
-  mysql:
-    container_name: committer-db
-    image: mysql:8.0
+  indexer:
+    container_name: indexer-server
+    image: ghcr.io/abelianl2/abe-indexer:20240607-162958-a64f6c6
     restart: always
-    # set shared memory limit when using docker-compose
-    shm_size: 128mb
-    # or set shared memory limit when deploy via swarm stack
     volumes:
-      - ./docker-entrypoint-initdb.d/mysql.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./db/mysql/datadir:/var/lib/mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=123456789
-      - MYSQL_DATABASE=abe_committer
+      - ./config:/app
     ports:
-      - 3306:3306
-  bridge:
-    container_name: bridge-db
-    image: mysql:8.0
-    restart: always
-    # set shared memory limit when using docker-compose
-    shm_size: 128mb
-    # or set shared memory limit when deploy via swarm stack
-    volumes:
-      - ./docker-entrypoint-initdb.d/bridge.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./db/mysql2/datadir:/var/lib/mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=123456789
-      - MYSQL_DATABASE=abe_bridge
-    ports:
-      - 3307:3306
+      - 9090:9090
+      - 9091:9091
+    command:
+      - /app/abe-indexer
+      - start

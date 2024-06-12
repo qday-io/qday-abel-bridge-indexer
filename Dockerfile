@@ -23,4 +23,4 @@ COPY --from=builder /app/build/abe-indexer /app/abe-indexer
 
 EXPOSE 9090 9091
 VOLUME /app
-CMD ["/app/abe-indexer"]
+CMD ["/app/abe-indexer","start"]

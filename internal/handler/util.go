@@ -104,9 +104,21 @@ func SetCmdServerContext(cmd *cobra.Command, serverCtx *model.Context) error {
 // NewDB creates a new database connection.
 // default use postgres driver
 func NewDB(cfg *config.Config) (*gorm.DB, error) {
-	DB, err := gorm.Open(postgres.Open(cfg.DatabaseSource), &gorm.Config{
-		Logger: gormlog.Default.LogMode(gormlog.Info),
-	})
+
+	var DB *gorm.DB
+	var err error
+	for i := 0; i < 2; i++ {
+		// waiting for db server start complete
+		time.Sleep(10 * time.Second)
+
+		DB, err = gorm.Open(postgres.Open(cfg.DatabaseSource), &gorm.Config{
+			Logger: gormlog.Default.LogMode(gormlog.Info),
+		})
+		if err == nil {
+			break
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}

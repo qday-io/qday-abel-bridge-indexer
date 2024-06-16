@@ -17,7 +17,6 @@ import (
 	b2types "github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/aa"
 	"github.com/b2network/b2-indexer/pkg/log"
-	"github.com/b2network/b2-indexer/pkg/particle"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -47,9 +46,7 @@ type Bridge struct {
 	BaseGasPriceMultiple int64
 	B2ExplorerURL        string
 	logger               log.Logger
-	// particle aa
-	particle *particle.Particle
-	network  string
+	network              string
 	// eoa transfer switch
 	//enableEoaTransfer bool
 	// aa server
@@ -109,7 +106,6 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 		EthPrivKey:      privateKey,
 		ABI:             ABI,
 		logger:          log,
-		particle:        nil,
 		network:         network,
 		//enableEoaTransfer:    bridgeCfg.EnableEoaTransfer,
 		AAPubKeyAPI:          bridgeCfg.AAB2PI,

@@ -38,10 +38,6 @@ func rootCmd() *cobra.Command {
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.AddCommand(buildIndexCmd())
-	rootCmd.AddCommand(buildHttpCmd())
-	//rootCmd.AddCommand(sinohopeCmd.Sinohope())
-	//rootCmd.AddCommand(gvsmCmd.Gvsm())
-	//rootCmd.AddCommand(cryptoCmd.Crypto())
 	return rootCmd
 }
 
@@ -76,31 +72,4 @@ func GetServerContextFromCmd(cmd *cobra.Command) *model.Context {
 	}
 
 	return handler.NewDefaultContext()
-}
-
-func buildHttpCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "http",
-		Short: "start http service",
-		PreRunE: func(cmd *cobra.Command, _ []string) error {
-			home, err := cmd.Flags().GetString(FlagHome)
-			if err != nil {
-				return err
-			}
-			return handler.HTTPConfigsPreRunHandler(cmd, home)
-		},
-		Run: func(cmd *cobra.Command, _ []string) {
-			db, err := handler.GetDBContextFromCmd(cmd)
-			if err != nil {
-				cmd.Println(err)
-				return
-			}
-			err = handler.Run(cmd.Context(), GetServerContextFromCmd(cmd), db)
-			if err != nil {
-				log.Error("start http service failed")
-			}
-		},
-	}
-	cmd.Flags().String(FlagHome, "", "The application home directory")
-	return cmd
 }

@@ -74,14 +74,6 @@ func (bis *IndexerService) CheckDb() error {
 		}
 	}
 
-	if !bis.db.Migrator().HasTable(&model.Sinohope{}) {
-		err := bis.db.AutoMigrate(&model.Sinohope{})
-		if err != nil {
-			bis.log.Errorw("bitcoin indexer create table", "error", err.Error())
-			return err
-		}
-	}
-
 	if !bis.db.Migrator().HasTable(&model.RollupDeposit{}) {
 		err := bis.db.AutoMigrate(&model.RollupDeposit{})
 		if err != nil {

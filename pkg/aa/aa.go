@@ -3,7 +3,6 @@ package aa
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/b2network/b2-indexer/pkg/rpc"
@@ -21,9 +20,9 @@ type Response struct {
 }
 
 func GetPubKey(api, txId, btcFromAddress string, btcFromNetwork string) (*Response, error) {
-	if !strings.HasPrefix(txId, "0x") {
-		txId = fmt.Sprintf("0x%v", txId)
-	}
+	//if !strings.HasPrefix(txId, "0x") {
+	//	txId = fmt.Sprintf("0x%v", txId)
+	//}
 
 	uri := fmt.Sprintf("%v/api/bridge/hash?hash=%v", api, txId)
 	res, err := rpc.HTTPGet(uri)

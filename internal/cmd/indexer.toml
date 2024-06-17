@@ -1,7 +1,7 @@
 root-dir = "./config"
 log-level = "info"
 log-format = "console"
-database-source = "postgres://abe_user:123456789@190.92.213.101:5432/abe_indexer"
+database-source = "postgres://abe_user:123456789@159.138.123.40:5432/abe_indexer"
 database-max-idle-conns = 10
 database-max-open-conns = 20
 database-conn-max-lifetime = 3600

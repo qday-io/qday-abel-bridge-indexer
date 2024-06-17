@@ -1,7 +1,6 @@
 package aa
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/b2network/b2-indexer/pkg/log"
@@ -51,13 +50,5 @@ func GetPubKey(api, txId, btcFromAddress string, btcFromNetwork string) (*Respon
 	}
 
 	btcResp := Response{Code: fmt.Sprintf("%v", code), Message: msg, Data: struct{ Pubkey string }{Pubkey: pubKey}}
-
-	err = json.Unmarshal(res, &btcResp)
-	if err != nil {
-		return nil, err
-	}
-
 	return &btcResp, nil
-
-	//return &Response{Code: fmt.Sprintf("%v", 0), Message: "0k", Data: struct{ Pubkey string }{Pubkey: "0x002E73CaaBD414eeaFE0fe3ecA18F4c7D9069207"}}, nil
 }

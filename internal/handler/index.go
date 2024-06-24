@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/b2network/b2-indexer/internal/config"
+	"github.com/b2network/b2-indexer/config"
 	"github.com/b2network/b2-indexer/internal/logic/indexer"
 	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
@@ -29,13 +29,6 @@ func HandleIndexCmd(ctx *model.Context, cmd *cobra.Command) (err error) {
 			return err
 		}
 	}
-
-	//if bitcoinCfg.Eps.EnableEps {
-	//	err = runEpsService(ctx, cmd)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
 
 	//if bitcoinCfg.Bridge.EnableRollupListener {
 	//	err = runRollupListenerService(ctx, cmd)

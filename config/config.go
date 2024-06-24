@@ -48,7 +48,6 @@ type BitcoinConfig struct {
 	IndexerListenTargetConfirmations uint64 `mapstructure:"indexer-listen-target-confirmations" env:"BITCOIN_INDEXER_LISTEN_TARGET_CONFIRMATIONS" envDefault:"1"`
 	// Bridge defines the bridge config
 	Bridge BridgeConfig `mapstructure:"bridge"`
-	Eps    EpsConfig    `mapstructure:"eps"`
 }
 
 type BridgeConfig struct {
@@ -84,13 +83,6 @@ type BridgeConfig struct {
 	MultisigNum int `mapstructure:"multisig-num" env:"BITCOIN_BRIDGE_MULTISIG_NUM"`
 	// EnableRollupListener defines rollup index server
 	EnableRollupListener bool `mapstructure:"enable-rollup-listener" env:"BITCOIN_BRIDGE_ROLLUP_ENABLE_LISTENER"`
-}
-
-// TODO: @robertcc0410 env prefix, mapstructure and env,  env prefix in the rule must be the same
-type EpsConfig struct {
-	EnableEps     bool   `mapstructure:"enable-eps" env:"ENABLE_EPS"`
-	URL           string `mapstructure:"url" env:"EPS_URL"`
-	Authorization string `mapstructure:"authorization" env:"EPS_AUTHORIZATION"`
 }
 
 // HTTPConfig defines the http server config

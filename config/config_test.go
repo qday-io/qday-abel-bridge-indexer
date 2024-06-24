@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/b2network/b2-indexer/internal/config"
+	"github.com/b2network/b2-indexer/config"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
 )

@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/b2network/b2-indexer/config"
 	"github.com/go-resty/resty/v2"
 
-	"github.com/b2network/b2-indexer/internal/config"
 	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/btcsuite/btcd/chaincfg"

@@ -1,6 +1,8 @@
 package model
 
-import "github.com/b2network/b2-indexer/internal/config"
+import (
+	"github.com/b2network/b2-indexer/config"
+)
 
 // server context
 type Context struct {

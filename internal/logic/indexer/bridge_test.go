@@ -11,11 +11,10 @@ import (
 	"path"
 	"testing"
 
-	"github.com/b2network/b2-indexer/internal/config"
+	config2 "github.com/b2network/b2-indexer/config"
 	"github.com/b2network/b2-indexer/internal/logic/indexer"
 	b2types "github.com/b2network/b2-indexer/internal/types"
 	logger "github.com/b2network/b2-indexer/pkg/log"
-	"github.com/b2network/b2committer/pkg/log"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/ethereum/go-ethereum"
@@ -46,12 +45,12 @@ func init2(t *testing.T) *indexer.Bridge {
 	abi, err := os.ReadFile(path.Join("./testdata", "abi.json"))
 	if err != nil {
 		// load default abi
-		ABI = config.DefaultDepositAbi
+		ABI = config2.DefaultDepositAbi
 	} else {
 		ABI = string(abi)
 	}
 
-	bridgeCfg := config.BridgeConfig{
+	bridgeCfg := config2.BridgeConfig{
 		EthRPCURL:       "http://124.243.137.251:8123",
 		ContractAddress: "0xDB6a51588433f0366082330aCFa8d2b7a1a5400A",
 		EthPrivKey:      "8623eb1173b001788b7dc789513c34d049a3d02c728b50daae5799fca009e111",
@@ -153,7 +152,7 @@ func TestABIPack(t *testing.T) {
 }
 
 func bridgeWithConfig(t *testing.T) *indexer.Bridge {
-	config, err := config.LoadBitcoinConfig("")
+	config, err := config2.LoadBitcoinConfig("")
 	require.NoError(t, err)
 	bridge, err := indexer.NewBridge(config.Bridge, "./", logger.NewNopLogger(), chaincfg.TestNet3Params.Name)
 	require.NoError(t, err)
@@ -189,7 +188,7 @@ func randHash(t *testing.T) string {
 // TestLocalBatchTransferWaitMined
 // Using this test method, you can batch send transactions to consume nonce
 func TestLocalBatchRestNonce(t *testing.T) {
-	config, err := config.LoadBitcoinConfig("")
+	config, err := config2.LoadBitcoinConfig("")
 	require.NoError(t, err)
 	// custom rpc key gas price
 	// config.Bridge.GasPriceMultiple = 3
@@ -228,7 +227,7 @@ func TestLocalBatchRestNonce(t *testing.T) {
 }
 
 func testSendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey,
-	toAddress common.Address, oldNonce uint64, cfg config.BridgeConfig,
+	toAddress common.Address, oldNonce uint64, cfg config2.BridgeConfig,
 ) (*types.Transaction, error) {
 	client, err := ethclient.Dial(cfg.EthRPCURL)
 	if err != nil {
@@ -249,11 +248,11 @@ func testSendTransaction(ctx context.Context, fromPriv *ecdsa.PrivateKey,
 	gasPrice.Mul(gasPrice, big.NewInt(cfg.GasPriceMultiple))
 
 	actualGasPrice := new(big.Int).Set(gasPrice)
-	log.Infof("gas price:%v", new(big.Float).Quo(new(big.Float).SetInt(actualGasPrice), big.NewFloat(1e9)).String())
-	log.Infof("gas price:%v", actualGasPrice.String())
-	log.Infof("nonce:%v", nonce)
-	log.Infof("from address:%v", fromAddress)
-	log.Infof("to address:%v", toAddress)
+	logger.Infof("gas price:%v", new(big.Float).Quo(new(big.Float).SetInt(actualGasPrice), big.NewFloat(1e9)).String())
+	logger.Infof("gas price:%v", actualGasPrice.String())
+	logger.Infof("nonce:%v", nonce)
+	logger.Infof("from address:%v", fromAddress)
+	logger.Infof("to address:%v", toAddress)
 	callMsg := ethereum.CallMsg{
 		From:     fromAddress,
 		To:       &toAddress,
@@ -310,7 +309,7 @@ func TestBridge_Deposit(t *testing.T) {
 	fromAddress := crypto.PubkeyToAddress(b.EthPrivKey.PublicKey)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 
-	log.Infof("from address:%v", fromAddress.Hex(), nonce)
+	logger.Infof("from address:%v", fromAddress.Hex(), nonce)
 
 	tos := "[{\"Value\": 16, \"Address\": \"0x1111111254fb6c44bAC0beD2854e76F90643097d\"}]"
 

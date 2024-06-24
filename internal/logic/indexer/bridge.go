@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/b2network/b2-indexer/internal/config"
+	config2 "github.com/b2network/b2-indexer/config"
 	b2types "github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/aa"
 	"github.com/b2network/b2-indexer/pkg/log"
@@ -63,7 +63,7 @@ type B2ExplorerStatus struct {
 var txLock sync.Mutex
 
 // NewBridge new bridge
-func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger, network string) (*Bridge, error) {
+func NewBridge(bridgeCfg config2.BridgeConfig, abiFileDir string, log log.Logger, network string) (*Bridge, error) {
 	rpcURL, err := url.ParseRequestURI(bridgeCfg.EthRPCURL)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func NewBridge(bridgeCfg config.BridgeConfig, abiFileDir string, log log.Logger,
 	abiFile, err := os.ReadFile(path.Join(abiFileDir, bridgeCfg.ABI))
 	if err != nil {
 		// load default abi
-		ABI = config.DefaultDepositAbi
+		ABI = config2.DefaultDepositAbi
 	} else {
 		ABI = string(abiFile)
 	}

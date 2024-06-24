@@ -24,7 +24,3 @@ time-interval = 10
 multisig-num = 0
 enable-rollup-listener = false
 
-[eps]
-enable-eps = false
-url = ""
-authorization = ""

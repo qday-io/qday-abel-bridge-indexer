@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/b2network/b2-indexer/internal/config"
+	"github.com/b2network/b2-indexer/config"
 	"github.com/b2network/b2-indexer/internal/model"
 	"github.com/b2network/b2-indexer/internal/types"
 	logger "github.com/b2network/b2-indexer/pkg/log"

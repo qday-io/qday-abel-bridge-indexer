@@ -25,6 +25,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/tidwall/gjson"
 )
 
 var (
@@ -142,7 +143,15 @@ func (b *Bridge) Deposit(
 	//todo test case
 	//toAddress := "0xdac17f958d2ee523a2206206994597c13d831ec7"
 
-	data, err := b.ABIPack(b.ABI, "depositV2", common.HexToHash(hash), common.HexToAddress(toAddress), new(big.Int).SetInt64(amount))
+	list := gjson.Parse(tos).Array()
+	var lockDuration uint64
+	if len(list) > 0 {
+		m := list[0].Get("Memo").String()
+		// xxh
+		lockDuration = gjson.Parse(m).Get("lockDuration").Uint()
+	}
+
+	data, err := b.ABIPack(b.ABI, "depositV2", common.HexToHash(hash), common.HexToAddress(toAddress), new(big.Int).SetInt64(amount), lockDuration)
 	if err != nil {
 		return nil, nil, toAddress, "", fmt.Errorf("abi pack err:%w", err)
 	}
@@ -434,7 +443,7 @@ func (b *Bridge) ABIPack(abiData string, method string, args ...interface{}) ([]
 func (b *Bridge) BitcoinAddressToEthAddress(hash string, bitcoinAddress b2types.BitcoinFrom) (string, error) {
 	pubKeyResp, err := aa.GetPubKey(b.AAPubKeyAPI, hash, bitcoinAddress.Address, b.network)
 	if err != nil {
-		b.logger.Errorw("get pub key:", "pubKeyResp", pubKeyResp, "address", bitcoinAddress.Address)
+		b.logger.Errorw("Get AAAddress:", "error", err.Error())
 		return "", err
 	}
 	//if pubkeyResp.Code != "0" {
@@ -457,7 +466,7 @@ func (b *Bridge) BitcoinAddressToEthAddress(hash string, bitcoinAddress b2types.
 	//b.logger.Infow("AAGetBTCAccount", "result", aaBtcAccount.Result[0])
 	//return aaBtcAccount.Result[0].SmartAccountAddress, nil
 
-	return pubKeyResp.Data.Pubkey, nil
+	return pubKeyResp.AAAddress, nil
 }
 
 // WaitMined wait tx mined
@@ -502,10 +511,6 @@ func (b *Bridge) TransactionByHash(hash string) (*types.Transaction, bool, error
 		return nil, false, err
 	}
 	return tx, isPending, nil
-}
-
-func (b *Bridge) EnableEoaTransfer() bool {
-	return false
 }
 
 func (b *Bridge) FromAddress() string {

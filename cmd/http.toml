@@ -1,4 +1,0 @@
-[http]
-http-port = "9090"
-grpc-port = "9091"
-ip-white-list = ""

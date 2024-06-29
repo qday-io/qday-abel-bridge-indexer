@@ -2,36 +2,41 @@ package aa
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/b2network/b2-indexer/pkg/log"
-	"github.com/b2network/b2-indexer/pkg/rpc"
 	"github.com/tidwall/gjson"
 )
 
 var AddressNotFoundErrCode = "1001"
 
 type Response struct {
-	Code    string
-	Message string
-	Data    struct {
-		Pubkey string
-	}
+	Code      string
+	Message   string
+	AAAddress string
 }
 
 func GetPubKey(api, txId, btcFromAddress string, btcFromNetwork string) (*Response, error) {
-	//if !strings.HasPrefix(txId, "0x") {
-	//	txId = fmt.Sprintf("0x%v", txId)
-	//}
-
 	uri := fmt.Sprintf("%v/api/bridge/hash?hash=%v", api, txId)
-	res, err := rpc.HTTPGet(uri)
+
+	res, err := http.Get(uri) //nolint
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("StatusCode: %d", res.StatusCode)
+	}
+
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Infof("get pubkey response:%v", string(res))
+	log.Infof("Get Pubkey response:%v", string(body))
 
-	root := gjson.ParseBytes(res)
+	root := gjson.ParseBytes(body)
 
 	code := root.Get("code").Int()
 	msg := root.Get("message").String()
@@ -49,6 +54,6 @@ func GetPubKey(api, txId, btcFromAddress string, btcFromNetwork string) (*Respon
 		return nil, fmt.Errorf("not found L2 address for btcAddres:%v", btcFromAddress)
 	}
 
-	btcResp := Response{Code: fmt.Sprintf("%v", code), Message: msg, Data: struct{ Pubkey string }{Pubkey: pubKey}}
+	btcResp := Response{Code: fmt.Sprintf("%v", code), Message: msg, AAAddress: pubKey}
 	return &btcResp, nil
 }

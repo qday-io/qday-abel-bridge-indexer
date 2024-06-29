@@ -4,8 +4,8 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
-// BITCOINTxIndexer defines the interface of custom bitcoin tx indexer.
-type BITCOINTxIndexer interface {
+// BitcoinTxIndexer defines the interface of custom bitcoin tx indexer.
+type BitcoinTxIndexer interface {
 	// ParseBlock parse bitcoin block tx
 	ParseBlock(int64, int64) ([]*BitcoinTxParseResult, *BlockInfo, error)
 	// LatestBlock get latest block height in the longest block chain.
@@ -20,7 +20,7 @@ type BITCOINTxIndexer interface {
 }
 
 type TxIndexer interface {
-	BITCOINTxIndexer
+	BitcoinTxIndexer
 	Stop()
 }
 
@@ -48,6 +48,7 @@ type BitcoinFrom struct {
 type BitcoinTo struct {
 	Address string
 	Value   int64
+	Memo    []byte
 }
 
 type BlockChainInfo struct {

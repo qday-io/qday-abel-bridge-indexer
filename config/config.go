@@ -85,23 +85,11 @@ type BridgeConfig struct {
 	EnableRollupListener bool `mapstructure:"enable-rollup-listener" env:"BITCOIN_BRIDGE_ROLLUP_ENABLE_LISTENER"`
 }
 
-// HTTPConfig defines the http server config
-type HTTPConfig struct {
-	// port defines the http server port
-	HTTPPort string `mapstructure:"http-port" env:"HTTP_PORT" envDefault:"9090"`
-	// port defines the grpc server port
-	GrpcPort string `mapstructure:"grpc-port" env:"HTTP_GRPC_PORT" envDefault:"9091"`
-	// ipWhiteList defines the ip white list, Only those in the whitelist can be called
-	IPWhiteList string `mapstructure:"ip-white-list" env:"HTTP_IP_WHITE_LIST"`
-}
-
 const (
 	BitcoinConfigFileName  = "bitcoin.toml"
 	AppConfigFileName      = "indexer.toml"
-	HTTPConfigFileName     = "http.toml"
 	BitcoinConfigEnvPrefix = "BITCOIN"
 	AppConfigEnvPrefix     = "APP"
-	HTTPConfigEnvPrefix    = "HTTP"
 )
 
 func LoadConfig(homePath string) (*Config, error) {
@@ -142,37 +130,6 @@ func LoadBitcoinConfig(homePath string) (*BitcoinConfig, error) {
 	v.SetConfigFile(configFile)
 
 	v.SetEnvPrefix(BitcoinConfigEnvPrefix)
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
-	v.AutomaticEnv()
-
-	// try load config from file
-	err := v.ReadInConfig()
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return nil, err
-		}
-		// if err load config from env
-		if err := env.Parse(&config); err != nil {
-			return nil, err
-		}
-		return &config, nil
-	}
-
-	err = v.Unmarshal(&config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &config, nil
-}
-
-func LoadHTTPConfig(homePath string) (*HTTPConfig, error) {
-	config := HTTPConfig{}
-	configFile := path.Join(homePath, HTTPConfigFileName)
-	v := viper.New()
-	v.SetConfigFile(configFile)
-
-	v.SetEnvPrefix(HTTPConfigEnvPrefix)
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	v.AutomaticEnv()
 

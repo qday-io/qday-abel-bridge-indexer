@@ -18,7 +18,3 @@ func Test_startCmd(t *testing.T) {
 		panic(err)
 	}
 }
-
-func Test_startHTTPServer(t *testing.T) {
-	buildHttpCmd()
-}

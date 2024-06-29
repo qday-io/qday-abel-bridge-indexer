@@ -255,6 +255,7 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 	parseTo := types.BitcoinTo{
 		Address: m.Receipt,
 		Value:   totalValue,
+		Memo:    memo,
 	}
 	tos = append(tos, parseTo)
 

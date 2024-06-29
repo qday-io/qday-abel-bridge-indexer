@@ -93,7 +93,7 @@ func runIndexerService(ctx *model.Context, cmd *cobra.Command, context osContext
 	return nil
 }
 
-func startBridgeProvider(ctx *model.Context, bitcoinCfg *config.BitcoinConfig, context osContext.Context, bidxer types.BITCOINTxIndexer, cmd *cobra.Command) error {
+func startBridgeProvider(ctx *model.Context, bitcoinCfg *config.BitcoinConfig, context osContext.Context, bidxer types.BitcoinTxIndexer, cmd *cobra.Command) error {
 	home := ctx.Config.RootDir
 	//bitcoinParam := config.ChainParams(bitcoinCfg.NetworkName)
 	db, err := GetDBContextFromCmd(cmd)
@@ -133,7 +133,7 @@ func startBridgeProvider(ctx *model.Context, bitcoinCfg *config.BitcoinConfig, c
 	return nil
 }
 
-func startIndexProvider(bidxer types.BITCOINTxIndexer, bidxLogger logger.Logger, cmd *cobra.Command) error {
+func startIndexProvider(bidxer types.BitcoinTxIndexer, bidxLogger logger.Logger, cmd *cobra.Command) error {
 
 	//bitcoinParam := config.ChainParams(bitcoinCfg.NetworkName)
 	//bidxLogger := newLogger(ctx, "[bitcoin-indexer]")

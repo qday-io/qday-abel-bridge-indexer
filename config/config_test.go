@@ -66,9 +66,6 @@ func TestBitcoinConfig(t *testing.T) {
 	require.Equal(t, "", config.Bridge.EthPrivKey)
 	require.Equal(t, "abi.json", config.Bridge.ABI)
 	require.Equal(t, "127.0.0.1:8080/v1/btc/pubkey", config.Bridge.AAB2PI)
-	require.Equal(t, true, config.Eps.EnableEps)
-	require.Equal(t, "127.0.0.1", config.Eps.URL)
-	require.Equal(t, "", config.Eps.Authorization)
 	require.Equal(t, "", config.Bridge.Deposit)
 	require.Equal(t, "", config.Bridge.Withdraw)
 	require.Equal(t, "", config.Bridge.UnisatAPIKey)
@@ -136,9 +133,6 @@ func TestBitcoinConfigEnv(t *testing.T) {
 	require.Equal(t, "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", config.Bridge.EthPrivKey)
 	require.Equal(t, "aaa.abi", config.Bridge.ABI)
 	require.Equal(t, "127.1.1.1:1234/v1/btc/xx", config.Bridge.AAB2PI)
-	require.Equal(t, true, config.Eps.EnableEps)
-	require.Equal(t, "127.0.0.1", config.Eps.URL)
-	require.Equal(t, "", config.Eps.Authorization)
 	require.Equal(t, "", config.Bridge.Deposit)
 	require.Equal(t, "", config.Bridge.Withdraw)
 	require.Equal(t, "", config.Bridge.UnisatAPIKey)
@@ -226,27 +220,4 @@ func TestConfigEnv(t *testing.T) {
 	require.Equal(t, 12, config.DatabaseMaxIdleConns)
 	require.Equal(t, 22, config.DatabaseMaxOpenConns)
 	require.Equal(t, 2100, config.DatabaseConnMaxLifetime)
-}
-
-func TestHTTPConfig(t *testing.T) {
-	os.Unsetenv("HTTP_PORT")
-	os.Unsetenv("HTTP_GRPC_PORT")
-	os.Unsetenv("HTTP_IP_WHITE_LIST")
-
-	config, err := config.LoadHTTPConfig("./testdata")
-	require.NoError(t, err)
-	require.Equal(t, "8080", config.HTTPPort)
-	require.Equal(t, "8081", config.GrpcPort)
-	require.Equal(t, "127.0.0.1", config.IPWhiteList)
-}
-
-func TestHTTPConfigEnv(t *testing.T) {
-	os.Setenv("HTTP_PORT", "8080")
-	os.Setenv("HTTP_GRPC_PORT", "8081")
-	os.Setenv("HTTP_IP_WHITE_LIST", "127.0.0.2")
-	config, err := config.LoadHTTPConfig("./")
-	require.NoError(t, err)
-	require.Equal(t, "8080", config.HTTPPort)
-	require.Equal(t, "8081", config.GrpcPort)
-	require.Equal(t, "127.0.0.2", config.IPWhiteList)
 }

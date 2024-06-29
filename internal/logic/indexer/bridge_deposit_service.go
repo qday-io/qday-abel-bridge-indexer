@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/b2network/b2-indexer/config"
@@ -34,18 +33,18 @@ var ErrServerStop = errors.New("server stop")
 type BridgeDepositService struct {
 	service.BaseService
 	bridgeCfg  config.BridgeConfig
-	bridge     types.BITCOINBridge
-	btcIndexer types.BITCOINTxIndexer
+	bridge     types.BitcoinBridge
+	btcIndexer types.BitcoinTxIndexer
 	db         *gorm.DB
 	log        log.Logger
-	wg         sync.WaitGroup
-	stopChan   chan struct{}
+	//wg         sync.WaitGroup
+	stopChan chan struct{}
 }
 
 // NewBridgeDepositService returns a new service instance.
 func NewBridgeDepositService(
-	bridge types.BITCOINBridge,
-	btcIndexer types.BITCOINTxIndexer,
+	bridge types.BitcoinBridge,
+	btcIndexer types.BitcoinTxIndexer,
 	db *gorm.DB,
 	logger log.Logger,
 	bridgeCfg config.BridgeConfig,
@@ -63,29 +62,22 @@ func NewBridgeDepositService(
 
 // OnStart
 func (bis *BridgeDepositService) OnStart() error {
-	bis.wg.Add(2)
-
 	go bis.Deposit()
-
 	if bis.bridgeCfg.EnableRollupListener {
 		go bis.CheckDeposit()
 	}
 	bis.stopChan = make(chan struct{})
-	select {}
+	return nil
 }
 
 func (bis *BridgeDepositService) OnStop() {
 	bis.log.Warnf("bridge deposit service stoping...")
 	close(bis.stopChan)
-	bis.wg.Wait()
+	//bis.wg.Wait()
 }
 
 func (bis *BridgeDepositService) Deposit() {
-	//ticker := time.NewTicker(BatchDepositWaitTimeout)
-	defer func() {
-		bis.wg.Done()
-		//ticker.Stop()
-	}()
+
 	for {
 		//DEPOSIT:
 		select {
@@ -103,19 +95,11 @@ func (bis *BridgeDepositService) Deposit() {
 				continue
 			}
 
-			// Query condition
-			// 1. tx status is pending
-			// 2. contract insufficient balance
-			// 3. invoke contract from account insufficient balance
-			// 4. callback status is success
-			// 5. listener status is success
-			//var deposits []model.Deposit
+			//handle deposit
 			deposits, err := bis.GetTxToDeposit()
-
 			if err != nil {
 				bis.log.Errorw("failed find tx from db", "error", err)
 			}
-
 			bis.log.Infow("start handle deposit", "deposit batch num", len(deposits))
 			for _, deposit := range deposits {
 				err = bis.HandleDeposit(deposit, nil, deposit.B2TxNonce, false)
@@ -137,43 +121,60 @@ func (bis *BridgeDepositService) Deposit() {
 			}
 
 			// handle aa not found err
-			// If there is no binding between the registered address and pubkey
-			// an error will occur, which can be handled again next time
-			var aaNotFoundDeposits []*model.Deposit
-			err = bis.db.Where(fmt.Sprintf("%s.%s = ?", model.Deposit{}.TableName(), model.Deposit{}.Column().B2TxStatus), model.DepositB2TxStatusAAAddressNotFound).
-				Limit(BatchDepositLimit).
-				Order(fmt.Sprintf("%s.%s ASC", model.Deposit{}.TableName(), model.Deposit{}.Column().BtcBlockNumber)).
-				Order(fmt.Sprintf("%s.%s ASC", model.Deposit{}.TableName(), "id")).
-				Find(&aaNotFoundDeposits).Error
+			err = bis.handleAADeposit()
 			if err != nil {
-				bis.log.Errorw("failed find tx from db", "error", err)
-			}
-
-			bis.log.Infow("start handle aa not found deposit", "aa not found deposit batch num", len(aaNotFoundDeposits))
-			for _, deposit := range aaNotFoundDeposits {
-				err = bis.HandleDeposit(deposit, nil, deposit.B2TxNonce, false)
-				if err != nil {
-					if errors.Is(err, ErrAAAddressNotFound) {
-						bis.log.Warnf("aa address not found")
-					} else {
-						bis.log.Errorw("handle aa not found deposit failed", "error", err, "deposit", deposit)
-					}
-					if errors.Is(err, ErrServerStop) {
-						return
-					}
-					//break DEPOSIT
-					//todo  add feature by vike
-					continue
-				}
-				select {
-				case <-bis.stopChan:
-					bis.log.Warnf("handle aa not found deposit stopping...")
+				bis.log.Warnf("handleAADeposit err: %s", err)
+				if errors.Is(err, ErrServerStop) {
 					return
-				case <-time.After(HandleDepositTimeout):
 				}
+				continue
 			}
 		}
 	}
+}
+
+func (bis *BridgeDepositService) handleAADeposit() error {
+	// handle aa not found err
+	// If there is no binding between the registered address and pubkey
+	// an error will occur, which can be handled again next time
+	var aaNotFoundDeposits []*model.Deposit
+	err := bis.db.Where(fmt.Sprintf("%s.%s = ?", model.Deposit{}.TableName(), model.Deposit{}.Column().B2TxStatus), model.DepositB2TxStatusAAAddressNotFound).
+		Limit(BatchDepositLimit).
+		Order(fmt.Sprintf("%s.%s ASC", model.Deposit{}.TableName(), model.Deposit{}.Column().BtcBlockNumber)).
+		Order(fmt.Sprintf("%s.%s ASC", model.Deposit{}.TableName(), "id")).
+		Find(&aaNotFoundDeposits).Error
+	if err != nil {
+		bis.log.Errorw("failed find tx from db", "error", err)
+		return err
+	}
+
+	if len(aaNotFoundDeposits) > 0 {
+		bis.log.Infow("start handle aa not found deposit", "Deposits.length", len(aaNotFoundDeposits))
+	}
+
+	for _, deposit := range aaNotFoundDeposits {
+		err = bis.HandleDeposit(deposit, nil, deposit.B2TxNonce, false)
+		if err != nil {
+			if errors.Is(err, ErrAAAddressNotFound) {
+				bis.log.Warnf("aa address not found")
+			} else {
+				bis.log.Errorw("handle aa not found deposit failed", "error", err, "deposit", deposit)
+			}
+			if errors.Is(err, ErrServerStop) {
+				return err
+			}
+			//break DEPOSIT
+			//todo  add feature by vike
+			continue
+		}
+		select {
+		case <-bis.stopChan:
+			bis.log.Warnf("handle aa not found deposit stopping...")
+			return ErrServerStop
+		case <-time.After(HandleDepositTimeout):
+		}
+	}
+	return nil
 }
 
 func (bis *BridgeDepositService) GetTxToDeposit() ([]*model.Deposit, error) {
@@ -201,6 +202,10 @@ func (bis *BridgeDepositService) GetTxToDeposit() ([]*model.Deposit, error) {
 		Where(
 			fmt.Sprintf("%s.%s = ?", model.Deposit{}.TableName(), model.Deposit{}.Column().ListenerStatus),
 			model.ListenerStatusSuccess,
+		).
+		Where(
+			fmt.Sprintf("%s.%s <= ?", model.Deposit{}.TableName(), model.Deposit{}.Column().B2TxRetry),
+			300,
 		).
 		Limit(BatchDepositLimit).
 		Order(fmt.Sprintf("%s.%s ASC", model.Deposit{}.TableName(), model.Deposit{}.Column().BtcBlockNumber)).
@@ -388,7 +393,7 @@ func (bis *BridgeDepositService) HandleDeposit(deposit *model.Deposit, oldTx *et
 		}
 		//errCh <- nil
 	}(ctx1, b2Tx, deposit)
-	waitMinedTicker := time.NewTicker(WaitMinedTimeout + (10 * time.Second))
+	waitMinedTicker := time.NewTimer(WaitMinedTimeout + (10 * time.Second))
 	bis.log.Warn("wait mined")
 	select {
 	case err = <-errCh:
@@ -504,11 +509,6 @@ func (bis *BridgeDepositService) WaitMined(ctx1 context.Context, b2Tx *ethTypes.
 }
 
 func (bis *BridgeDepositService) CheckDeposit() {
-	//ticker := time.NewTicker(BatchDepositWaitTimeout)
-	defer func() {
-		bis.wg.Done()
-		//ticker.Stop()
-	}()
 	for {
 		select {
 		case <-bis.stopChan:

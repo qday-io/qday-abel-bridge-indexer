@@ -31,5 +31,4 @@ func TestAbelianIndexer_ParseBlock(t *testing.T) {
 	}
 
 	t.Logf("txs: %v block: %v", txs[0], block)
-
 }

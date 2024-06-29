@@ -6,8 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// BITCOINBridge defines the interface of custom bitcoin bridge.
-type BITCOINBridge interface {
+// BitcoinBridge defines the interface of custom bitcoin bridge.
+type BitcoinBridge interface {
 	// Deposit transfers amout to address
 	Deposit(string, BitcoinFrom, string, int64, *types.Transaction, uint64, bool) (*types.Transaction, []byte, string, string, error)
 	// Transfer amount to address
@@ -18,7 +18,5 @@ type BITCOINBridge interface {
 	TransactionReceipt(hash string) (*types.Receipt, error)
 	// TransactionByHash
 	TransactionByHash(hash string) (*types.Transaction, bool, error)
-	//  EnableEoaTransfer
-	EnableEoaTransfer() bool
 	FromAddress() string
 }

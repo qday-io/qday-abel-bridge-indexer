@@ -48,7 +48,7 @@ type BitcoinFrom struct {
 type BitcoinTo struct {
 	Address string
 	Value   int64
-	Memo    []byte
+	Memo    any
 }
 
 type BlockChainInfo struct {

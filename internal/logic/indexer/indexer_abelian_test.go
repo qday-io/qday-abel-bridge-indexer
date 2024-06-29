@@ -8,7 +8,7 @@ import (
 )
 
 func init2() *AbelianIndexer {
-	bitcoinCfg, err := config.LoadBitcoinConfig("./")
+	bitcoinCfg, err := config.LoadBitcoinConfig("../../../cmd/")
 	if err != nil {
 		panic(err)
 	}
@@ -24,7 +24,7 @@ func init2() *AbelianIndexer {
 func TestAbelianIndexer_ParseBlock(t *testing.T) {
 	b := init2()
 
-	txs, block, err := b.ParseBlock(289922, 0)
+	txs, block, err := b.ParseBlock(304092, 0)
 	if err != nil {
 		t.Fatal(err)
 		return

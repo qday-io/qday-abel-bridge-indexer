@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path"
 	"syscall"
 	"time"
 
@@ -102,7 +101,7 @@ func startBridgeProvider(ctx *model.Context, bitcoinCfg *config.BitcoinConfig, c
 		return err
 	}
 	bridgeLogger := newLogger(ctx, "[bridge-deposit]")
-	bridge, err := indexer.NewBridge(bitcoinCfg.Bridge, path.Join(home, "config"), bridgeLogger, bitcoinCfg.NetworkName)
+	bridge, err := indexer.NewBridge(bitcoinCfg.Bridge, home, bridgeLogger, bitcoinCfg.NetworkName)
 	if err != nil {
 		logger.Errorw("failed to create bitcoin bridge", "error", err.Error())
 		return err

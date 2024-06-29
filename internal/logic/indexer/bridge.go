@@ -144,14 +144,13 @@ func (b *Bridge) Deposit(
 	//toAddress := "0xdac17f958d2ee523a2206206994597c13d831ec7"
 
 	list := gjson.Parse(tos).Array()
-	var lockDuration uint64
+	var lockupPeriod, rewardRatio uint64
 	if len(list) > 0 {
-		m := list[0].Get("Memo").String()
-		// xxh
-		lockDuration = gjson.Parse(m).Get("lockDuration").Uint()
+		lockupPeriod = list[0].Get("Memo.lockupPeriod").Uint()
+		rewardRatio = list[0].Get("Memo.rewardRatio").Uint()
 	}
 
-	data, err := b.ABIPack(b.ABI, "depositV2", common.HexToHash(hash), common.HexToAddress(toAddress), new(big.Int).SetInt64(amount), lockDuration)
+	data, err := b.ABIPack(b.ABI, "depositV2", common.HexToHash(hash), common.HexToAddress(toAddress), new(big.Int).SetInt64(amount), lockupPeriod, rewardRatio)
 	if err != nil {
 		return nil, nil, toAddress, "", fmt.Errorf("abi pack err:%w", err)
 	}

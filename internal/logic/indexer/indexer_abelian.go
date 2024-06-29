@@ -223,7 +223,7 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 	err = json.Unmarshal(memo, &m)
 	if err != nil {
 		b.logger.Errorf("unmarshal memo error:%v,txId:%v,memo:%v", err, txResult.TxID, string(memo))
-		return nil, nil
+		return nil, err
 	}
 
 	listenAddress := b.listenAddress
@@ -248,14 +248,14 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 
 	if err != nil {
 		b.logger.Errorf("ParseInt value error:%v,txId:%v,memo:%v", err, txResult.TxID, string(memo))
-		return nil, nil
+		return nil, err
 	}
 
 	tos := make([]types.BitcoinTo, 0)
 	parseTo := types.BitcoinTo{
 		Address: m.Receipt,
 		Value:   totalValue,
-		Memo:    memo,
+		Memo:    m,
 	}
 	tos = append(tos, parseTo)
 
@@ -514,10 +514,12 @@ type AbelianChainInfo struct {
 */
 
 type Memo struct {
-	Action   string `json:"action"`
-	Protocol string `json:"protocol"`
-	From     string `json:"from"`
-	To       string `json:"to"`
-	Value    string `json:"value"`
-	Receipt  string `json:"receipt"`
+	Action       string `json:"action"`
+	Protocol     string `json:"protocol"`
+	From         string `json:"from"`
+	To           string `json:"to"`
+	Value        string `json:"value"`
+	Receipt      string `json:"receipt"`
+	LockupPeriod int64  `json:"lockupPeriod"`
+	RewardRatio  int64  `json:"rewardRatio"`
 }

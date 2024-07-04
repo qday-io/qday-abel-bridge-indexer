@@ -11,7 +11,7 @@ indexer-listen-target-confirmations = 1
 
 [bridge]
 eth-rpc-url = "http://159.138.82.123:8123"
-eth-priv-key = "e98efa78ff5266cee58373b4475f8b50f48c6edb6e47331b84f0ba4db7289a67"
+eth-priv-key = ""
 contract-address = "0x50c342af114d6f7F70d7E14FC351012651F80E97"
 abi = "abi.json"
 aa-b2-api = "https://deposit-test.qday.ninja:9002"

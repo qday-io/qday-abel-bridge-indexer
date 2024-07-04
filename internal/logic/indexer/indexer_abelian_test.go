@@ -1,6 +1,7 @@
 package indexer
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/b2network/b2-indexer/config"
@@ -31,4 +32,7 @@ func TestAbelianIndexer_ParseBlock(t *testing.T) {
 	}
 
 	t.Logf("txs: %v block: %v", txs[0], block)
+
+	bs, _ := json.Marshal(txs[0].Tos)
+	t.Log(string(bs))
 }

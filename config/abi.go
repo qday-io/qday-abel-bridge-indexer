@@ -3,18 +3,96 @@ package config
 var DefaultDepositAbi = `
 [
     {
+      "inputs": [
+        {
+          "internalType": "contract WAbel",
+          "name": "wAbel_",
+          "type": "address"
+        },
+        {
+          "internalType": "contract VeQday",
+          "name": "veQday_",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "startTime_",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "AccessControlBadConfirmation",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "neededRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "AccessControlUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "start",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "stakeDay",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "current",
+          "type": "uint256"
+        }
+      ],
+      "name": "InvalidStakeTime",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "start",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "stakeDay",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "current",
+          "type": "uint256"
+        }
+      ],
+      "name": "InvalidWithdrawTime",
+      "type": "error"
+    },
+    {
       "anonymous": false,
       "inputs": [
         {
           "indexed": true,
           "internalType": "address",
-          "name": "caller",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "to_address",
+          "name": "to",
           "type": "address"
         },
         {
@@ -24,20 +102,51 @@ var DefaultDepositAbi = `
           "type": "uint256"
         }
       ],
-      "name": "DepositEvent",
+      "name": "Airdrop",
       "type": "event"
     },
     {
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
           "indexed": false,
-          "internalType": "uint8",
-          "name": "version",
-          "type": "uint8"
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
         }
       ],
-      "name": "Initialized",
+      "name": "BurnWAbel",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "lockDay",
+          "type": "uint256"
+        }
+      ],
+      "name": "MintWAbel",
       "type": "event"
     },
     {
@@ -116,31 +225,6 @@ var DefaultDepositAbi = `
       "type": "event"
     },
     {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "from_address",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "string",
-          "name": "btc_address",
-          "type": "string"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "WithdrawEvent",
-      "type": "event"
-    },
-    {
       "inputs": [],
       "name": "ADMIN_ROLE",
       "outputs": [
@@ -148,6 +232,32 @@ var DefaultDepositAbi = `
           "internalType": "bytes32",
           "name": "",
           "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "BURNER_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DAY_SECONDS",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -167,44 +277,62 @@ var DefaultDepositAbi = `
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "b2_to_address",
-          "type": "address"
-        },
+      "inputs": [],
+      "name": "GAS_FEES",
+      "outputs": [
         {
           "internalType": "uint256",
-          "name": "btc_amount",
+          "name": "",
           "type": "uint256"
         }
       ],
-      "name": "deposit",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MINTER_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "airdropDay",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "deposit_uuid",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "address",
-          "name": "b2_to_address",
-          "type": "address"
-        },
-        {
           "internalType": "uint256",
-          "name": "btc_amount",
+          "name": "amount",
           "type": "uint256"
         }
       ],
-      "name": "depositV2",
+      "name": "burnWAbel",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "depositAndStake",
+      "outputs": [],
+      "stateMutability": "payable",
       "type": "function"
     },
     {
@@ -270,7 +398,36 @@ var DefaultDepositAbi = `
     },
     {
       "inputs": [],
-      "name": "initialize",
+      "name": "lockDay",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to_",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lockDay_",
+          "type": "uint256"
+        }
+      ],
+      "name": "mintWAbel",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -284,7 +441,7 @@ var DefaultDepositAbi = `
         },
         {
           "internalType": "address",
-          "name": "account",
+          "name": "callerConfirmation",
           "type": "address"
         }
       ],
@@ -314,6 +471,69 @@ var DefaultDepositAbi = `
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "day",
+          "type": "uint256"
+        }
+      ],
+      "name": "reward",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "stake",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stakeDay",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "startTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes4",
           "name": "interfaceId",
           "type": "bytes4"
@@ -332,7 +552,7 @@ var DefaultDepositAbi = `
     },
     {
       "inputs": [],
-      "name": "version",
+      "name": "totalQday",
       "outputs": [
         {
           "internalType": "uint256",
@@ -340,43 +560,186 @@ var DefaultDepositAbi = `
           "type": "uint256"
         }
       ],
-      "stateMutability": "pure",
+      "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
         {
-          "internalType": "string",
-          "name": "btc_address",
-          "type": "string"
+          "internalType": "uint256",
+          "name": "day",
+          "type": "uint256"
         }
       ],
-      "name": "withdraw",
-      "outputs": [],
-      "stateMutability": "payable",
+      "name": "totalStake",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "withdraw_uuid",
-          "type": "bytes32"
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "unlockedReward",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "unstake",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "unstakeAndWithdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "startTime_",
+          "type": "uint256"
         },
         {
-          "internalType": "string",
-          "name": "btc_address",
-          "type": "string"
+          "internalType": "uint256",
+          "name": "totalQday_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "airdropDay_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "stakeDay_",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lockDay_",
+          "type": "uint256"
         }
       ],
-      "name": "withdrawV2",
+      "name": "updateParams",
       "outputs": [],
-      "stateMutability": "payable",
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
-      "stateMutability": "payable",
-      "type": "receive"
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "day",
+          "type": "uint256"
+        }
+      ],
+      "name": "userStake",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "veQday",
+      "outputs": [
+        {
+          "internalType": "contract VeQday",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "wAbel",
+      "outputs": [
+        {
+          "internalType": "contract WAbel",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address payable",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "withdrawReward",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address payable",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "withdrawTo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
     }
   ]
 `

@@ -38,29 +38,18 @@ func newLogger(name string) logger.Logger {
 }
 
 func init2(t *testing.T) *indexer.Bridge {
-	abiPath := path.Join("./testdata")
-
-	ABI := ""
-
-	abi, err := os.ReadFile(path.Join("./testdata", "abi.json"))
-	if err != nil {
-		// load default abi
-		ABI = config2.DefaultDepositAbi
-	} else {
-		ABI = string(abi)
-	}
-
+	home := "../../../cmd/"
 	bridgeCfg := config2.BridgeConfig{
-		EthRPCURL:       "http://124.243.137.251:8123",
-		ContractAddress: "0xDB6a51588433f0366082330aCFa8d2b7a1a5400A",
-		EthPrivKey:      "8623eb1173b001788b7dc789513c34d049a3d02c728b50daae5799fca009e111",
-		ABI:             ABI,
+		EthRPCURL:       "http://159.138.82.123:8123",
+		ContractAddress: "0x758E0CD0525Bab4358e925045C7fc87DbD743c48",
+		EthPrivKey:      "8e86d1a13608e6ee7e21dab63eb285b1f870d6a5dd8d89b145a5eaed6ee0d366",
+		ABI:             "abi.json",
 		AAB2PI:          "https://deposit-test.qday.ninja:9002",
 	}
 
 	log := newLogger("[bridge]")
 
-	bridge, err := indexer.NewBridge(bridgeCfg, abiPath, log, "Abelian Testnetwork")
+	bridge, err := indexer.NewBridge(bridgeCfg, home, log, "Abelian Testnetwork")
 
 	if err != nil {
 		t.Fatal(err)
@@ -311,9 +300,26 @@ func TestBridge_Deposit(t *testing.T) {
 
 	logger.Infof("from address:%v", fromAddress.Hex(), nonce)
 
-	tos := "[{\"Value\": 16, \"Address\": \"0x1111111254fb6c44bAC0beD2854e76F90643097d\"}]"
+	tos := `
+[
+    {
+        "Address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+        "Value": 11000000,
+        "Memo": {
+            "action": "deposit",
+            "protocol": "Mable",
+            "from": "abe36f503e14f9fe13950e009d89de269031aab054223858cc4241224b95c9fd0bed381d445ca1077b69f4bd12faa2248797f6edaee7d4777ff1a6366f3a46d198d8",
+            "to": "abe338ce0ce178fb0aca42b4e400cdf395c92cbf9c5c9abd678aa516835f697bd6d280b285815924f862352c5463421c9f8d247f65dc112aa04c25de925bd1d1a334",
+            "value": "11000000",
+            "receipt": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+            "lockupPeriod": 180,
+            "rewardRatio": 0
+        }
+    }
+]
+`
 
-	b2Tx, _, aaAddress, fromAddr, err := b.Deposit(hash, from, tos, 150000000000, nil, nonce, false)
+	b2Tx, _, aaAddress, fromAddr, err := b.Deposit(hash, from, tos, 11000000, nil, nonce, false)
 
 	if err != nil {
 		t.Fatal(err)

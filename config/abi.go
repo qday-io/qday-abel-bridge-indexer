@@ -47,6 +47,27 @@ var DefaultDepositAbi = `
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "balance",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "needed",
+          "type": "uint256"
+        }
+      ],
+      "name": "InsufficientBalance",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint256",
           "name": "start",
           "type": "uint256"
@@ -63,6 +84,27 @@ var DefaultDepositAbi = `
         }
       ],
       "name": "InvalidStakeTime",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "start",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "stakeDay",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "current",
+          "type": "uint256"
+        }
+      ],
+      "name": "InvalidUnstakeTime",
       "type": "error"
     },
     {
@@ -225,6 +267,81 @@ var DefaultDepositAbi = `
       "type": "event"
     },
     {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "day",
+          "type": "uint256"
+        }
+      ],
+      "name": "Stake",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "day",
+          "type": "uint256"
+        }
+      ],
+      "name": "Unstake",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "day",
+          "type": "uint256"
+        }
+      ],
+      "name": "WithdrawReward",
+      "type": "event"
+    },
+    {
       "inputs": [],
       "name": "ADMIN_ROLE",
       "outputs": [
@@ -304,6 +421,19 @@ var DefaultDepositAbi = `
     },
     {
       "inputs": [],
+      "name": "TOTAL_QDAY",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "airdropDay",
       "outputs": [
         {
@@ -329,10 +459,22 @@ var DefaultDepositAbi = `
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "depositAndStake",
-      "outputs": [],
-      "stateMutability": "payable",
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "claimedReward",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -433,6 +575,19 @@ var DefaultDepositAbi = `
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "overQday",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "bytes32",
@@ -495,6 +650,25 @@ var DefaultDepositAbi = `
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "reward",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
@@ -516,6 +690,13 @@ var DefaultDepositAbi = `
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stakeWithQday",
+      "outputs": [],
+      "stateMutability": "payable",
       "type": "function"
     },
     {
@@ -552,7 +733,7 @@ var DefaultDepositAbi = `
     },
     {
       "inputs": [],
-      "name": "totalQday",
+      "name": "totalReward",
       "outputs": [
         {
           "internalType": "uint256",
@@ -571,6 +752,19 @@ var DefaultDepositAbi = `
           "type": "uint256"
         }
       ],
+      "name": "totalStake",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "totalStake",
       "outputs": [
         {
@@ -622,7 +816,7 @@ var DefaultDepositAbi = `
           "type": "uint256"
         }
       ],
-      "name": "unstakeAndWithdraw",
+      "name": "unstakeWithQday",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -632,11 +826,6 @@ var DefaultDepositAbi = `
         {
           "internalType": "uint256",
           "name": "startTime_",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "totalQday_",
           "type": "uint256"
         },
         {
@@ -685,6 +874,25 @@ var DefaultDepositAbi = `
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "userStake",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "veQday",
       "outputs": [
@@ -714,19 +922,6 @@ var DefaultDepositAbi = `
       "inputs": [
         {
           "internalType": "address payable",
-          "name": "account",
-          "type": "address"
-        }
-      ],
-      "name": "withdrawReward",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address payable",
           "name": "to",
           "type": "address"
         },
@@ -736,7 +931,20 @@ var DefaultDepositAbi = `
           "type": "uint256"
         }
       ],
-      "name": "withdrawTo",
+      "name": "withdrawQday",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address payable",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "withdrawReward",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

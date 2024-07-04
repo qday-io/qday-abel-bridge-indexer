@@ -10,7 +10,7 @@ indexer-listen-address = "abe338ce0ce178fb0aca42b4e400cdf395c92cbf9c5c9abd678aa5
 indexer-listen-target-confirmations = 1
 
 [bridge]
-eth-rpc-url = "http://159.138.82.123:8123"
+eth-rpc-url = ""
 eth-priv-key = ""
 contract-address = "0x50c342af114d6f7F70d7E14FC351012651F80E97"
 abi = "abi.json"

@@ -1,4 +1,4 @@
-FROM golang:1.21.9  as builder
+FROM golang:1.23.2  as builder
 ENV CGO_ENABLED 0
 ENV GOPROXY https://goproxy.cn,direct
 RUN cd / && mkdir app

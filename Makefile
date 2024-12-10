@@ -2,9 +2,9 @@ BUILDDIR ?= $(CURDIR)/build
 NAMESPACE := ghcr.io/abelianl2
 PROJECT := abe-indexer
 DOCKER_IMAGE := $(NAMESPACE)/$(PROJECT)
-COMMIT_HASH := $(shell git rev-parse --short=7 HEAD)
-DATE=$(shell date +%Y%m%d-%H%M%S)
-DOCKER_TAG := ${DATE}-$(COMMIT_HASH)
+#COMMIT_HASH := $(shell git rev-parse --short=7 HEAD)
+#DATE=$(shell date +%Y%m%d-%H%M%S)
+DOCKER_TAG := 0.2.1
 MODULES := $(wildcard api/*)
 SYSTEM := $(shell uname -s)
 

@@ -1,6 +1,6 @@
 module github.com/b2network/b2-indexer
 
-go 1.21.4
+go 1.23.2
 
 require (
 	github.com/btcsuite/btcd v0.24.0

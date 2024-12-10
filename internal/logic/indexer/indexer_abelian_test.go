@@ -6,6 +6,7 @@ import (
 
 	"github.com/b2network/b2-indexer/config"
 	logger "github.com/b2network/b2-indexer/pkg/log"
+	"github.com/stretchr/testify/assert"
 )
 
 func init2() *AbelianIndexer {
@@ -25,14 +26,24 @@ func init2() *AbelianIndexer {
 func TestAbelianIndexer_ParseBlock(t *testing.T) {
 	b := init2()
 
-	txs, block, err := b.ParseBlock(304092, 0)
-	if err != nil {
-		t.Fatal(err)
-		return
+	txs, block, err := b.ParseBlock(373168, 0)
+
+	assert.NoError(t, err)
+
+	t.Logf("txs: %v block: %v", txs, block)
+
+	if len(txs) > 0 {
+		bs, _ := json.Marshal(txs[0].Tos)
+		t.Log(string(bs))
 	}
+}
 
-	t.Logf("txs: %v block: %v", txs[0], block)
+func TestAbelianIndexer_BlockChainInfo(t *testing.T) {
 
-	bs, _ := json.Marshal(txs[0].Tos)
-	t.Log(string(bs))
+	b := init2()
+	resp, err := b.BlockChainInfo()
+	assert.NoError(t, err)
+
+	t.Log(resp.Blocks)
+
 }

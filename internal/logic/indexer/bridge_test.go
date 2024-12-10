@@ -41,7 +41,7 @@ func init2(t *testing.T) *indexer.Bridge {
 	home := "../../../cmd/"
 	bridgeCfg := config2.BridgeConfig{
 		EthRPCURL:       "http://159.138.82.123:8123",
-		ContractAddress: "0x758E0CD0525Bab4358e925045C7fc87DbD743c48",
+		ContractAddress: "0xD7933fd41EB93680Ba615b87eEC99D76aa5E007C",
 		EthPrivKey:      "8e86d1a13608e6ee7e21dab63eb285b1f870d6a5dd8d89b145a5eaed6ee0d366",
 		ABI:             "abi.json",
 		AAB2PI:          "https://deposit-test.qday.ninja:9002",
@@ -303,7 +303,7 @@ func TestBridge_Deposit(t *testing.T) {
 	tos := `
 [
     {
-        "Address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+        "Address": "0x176F283DcD00b75334f643a8a8C72E42EBF96755",
         "Value": 11000000,
         "Memo": {
             "action": "deposit",
@@ -311,7 +311,7 @@ func TestBridge_Deposit(t *testing.T) {
             "from": "abe36f503e14f9fe13950e009d89de269031aab054223858cc4241224b95c9fd0bed381d445ca1077b69f4bd12faa2248797f6edaee7d4777ff1a6366f3a46d198d8",
             "to": "abe338ce0ce178fb0aca42b4e400cdf395c92cbf9c5c9abd678aa516835f697bd6d280b285815924f862352c5463421c9f8d247f65dc112aa04c25de925bd1d1a334",
             "value": "11000000",
-            "receipt": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+            "receipt": "0x176F283DcD00b75334f643a8a8C72E42EBF96755",
             "lockupPeriod": 180,
             "rewardRatio": 0
         }

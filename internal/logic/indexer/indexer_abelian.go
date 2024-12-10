@@ -14,6 +14,7 @@ import (
 	"github.com/b2network/b2-indexer/config"
 	"github.com/b2network/b2-indexer/internal/types"
 	"github.com/b2network/b2-indexer/pkg/log"
+	"github.com/b2network/b2-indexer/pkg/utils"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/tidwall/gjson"
@@ -244,7 +245,13 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 	if listenAddress == toAddress {
 		hasListenAddress = true
 	}
-	totalValue, err := strconv.ParseInt(m.Value, 0, 64)
+
+	v, err := utils.ConvertScientificToBigIntString(m.Value)
+	if err != nil {
+		b.logger.Errorf("ParseInt value error:%v,txId:%v,memo:%v", err, txResult.TxID, string(memo))
+		return nil, err
+	}
+	totalValue, err := strconv.ParseInt(v, 0, 64)
 
 	if err != nil {
 		b.logger.Errorf("ParseInt value error:%v,txId:%v,memo:%v", err, txResult.TxID, string(memo))

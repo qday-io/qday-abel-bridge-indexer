@@ -1,4 +1,4 @@
-name: Build docker images
+name: Qday Build docker images
 
 on:
   push:

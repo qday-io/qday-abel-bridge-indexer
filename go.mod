@@ -1,4 +1,4 @@
-module github.com/b2network/b2-indexer
+module github.com/qday-io/qday-abel-bridge-indexer
 
 go 1.23.2
 
@@ -17,6 +17,7 @@ require (
 )
 
 require (
+	github.com/b2network/b2-indexer v0.2.1
 	github.com/btcsuite/btcd/btcutil/psbt v1.1.9
 	github.com/cometbft/cometbft v0.38.5
 	github.com/ethereum/go-ethereum v1.13.14
@@ -100,3 +101,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/b2network/b2-indexer => github.com/qday-io/qday-abel-bridge-indexer v0.2.1

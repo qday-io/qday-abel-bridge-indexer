@@ -5,18 +5,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	_interface "github.com/qday-io/qday-abel-bridge-indexer/internal/interface"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/qday-io/qday-abel-bridge-indexer/config"
-	"github.com/qday-io/qday-abel-bridge-indexer/internal/types"
-	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
-	"github.com/qday-io/qday-abel-bridge-indexer/pkg/utils"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/qday-io/qday-abel-bridge-indexer/config"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/utils"
 	"github.com/tidwall/gjson"
 )
 
@@ -30,7 +31,7 @@ type AbelianIndexer struct {
 }
 
 // NewAbelianIndexer new bitcoin indexer
-func NewAbelianIndexer(log log.Logger, bitcoinCfg *config.BitcoinConfig, listenAddress string, targetConfirmations uint64) (types.TxIndexer, error) {
+func NewAbelianIndexer(log log.Logger, bitcoinCfg *config.BitcoinConfig, listenAddress string, targetConfirmations uint64) (_interface.TxIndexer, error) {
 	// check listenAddress
 	//address, err := btcutil.DecodeAddress(listenAddress, chainParams)
 	//if err != nil {
@@ -122,7 +123,7 @@ func (b *AbelianIndexer) Stop() {
 
 // ParseBlock parse block data by block height
 // NOTE: Currently, only transfer transactions are supported.
-func (b *AbelianIndexer) ParseBlock(height int64, txIndex int64) ([]*types.BitcoinTxParseResult, *types.BlockInfo, error) {
+func (b *AbelianIndexer) ParseBlock(height int64, txIndex int64) ([]*model.BitcoinTxParseResult, *model.BlockInfo, error) {
 	blockResult, err := b.GetBlockByHeight(height)
 	if err != nil {
 		return nil, nil, err
@@ -133,7 +134,7 @@ func (b *AbelianIndexer) ParseBlock(height int64, txIndex int64) ([]*types.Bitco
 		return nil, nil, fmt.Errorf("btc block convert error")
 	}
 
-	blockParsedResult := make([]*types.BitcoinTxParseResult, 0)
+	blockParsedResult := make([]*model.BitcoinTxParseResult, 0)
 	for k, v := range MsgBlock.RawTxs {
 		if int64(k) < txIndex {
 			continue
@@ -169,7 +170,7 @@ func (b *AbelianIndexer) CheckConfirmations(hash string) error {
 }
 
 // parseTx parse transaction data
-func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxParseResult, error) {
+func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*model.BitcoinTxParseResult, error) {
 
 	if len(txResult.Memo) < 9 {
 		b.logger.Warnf("memo format error, txId:%v,memo:%v", txResult.TxID, txResult.Memo)
@@ -258,8 +259,8 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 		return nil, err
 	}
 
-	tos := make([]types.BitcoinTo, 0)
-	parseTo := types.BitcoinTo{
+	tos := make([]model.BitcoinTo, 0)
+	parseTo := model.BitcoinTo{
 		Address: m.Receipt,
 		Value:   totalValue,
 		Memo:    m,
@@ -282,12 +283,12 @@ func (b *AbelianIndexer) parseTx(txResult *AbecTx, index int) (*types.BitcoinTxP
 			return nil, nil
 		}
 
-		return &types.BitcoinTxParseResult{
+		return &model.BitcoinTxParseResult{
 			TxID:   txResult.TxID,
 			TxType: TxTypeTransfer,
 			Index:  int64(index),
 			Value:  totalValue,
-			From: []types.BitcoinFrom{types.BitcoinFrom{
+			From: []model.BitcoinFrom{model.BitcoinFrom{
 				Address: m.From,
 			}},
 			To:  b.listenAddress,
@@ -330,7 +331,7 @@ func (b *AbelianIndexer) LatestBlock() (int64, error) {
 }
 
 // BlockChainInfo get block chain info
-func (b *AbelianIndexer) BlockChainInfo() (*types.BlockChainInfo, error) {
+func (b *AbelianIndexer) BlockChainInfo() (*model.BlockChainInfo, error) {
 	resp, err := b.getResponseFromChan("getinfo", nil)
 	if err != nil {
 		return nil, err
@@ -342,7 +343,7 @@ func (b *AbelianIndexer) BlockChainInfo() (*types.BlockChainInfo, error) {
 		return nil, err
 	}
 
-	blockchainInfo := &types.BlockChainInfo{
+	blockchainInfo := &model.BlockChainInfo{
 		Chain:  strconv.FormatInt(abe.NetId, 10),
 		Blocks: abe.Blocks,
 		Data:   abe,
@@ -351,7 +352,7 @@ func (b *AbelianIndexer) BlockChainInfo() (*types.BlockChainInfo, error) {
 	return blockchainInfo, nil
 }
 
-func (b *AbelianIndexer) GetRawTransactionVerbose(hash string) (*types.TxInfo, error) {
+func (b *AbelianIndexer) GetRawTransactionVerbose(hash string) (*model.TxInfo, error) {
 	if has0xPrefix(hash) {
 		hash = strings.Replace(hash, "0x", "", 1)
 	}
@@ -369,7 +370,7 @@ func (b *AbelianIndexer) GetRawTransactionVerbose(hash string) (*types.TxInfo, e
 		return nil, err
 	}
 
-	tx := &types.TxInfo{
+	tx := &model.TxInfo{
 		Hash:          hash,
 		Confirmations: abeTx.Confirmations,
 		Data:          abeTx,
@@ -377,12 +378,12 @@ func (b *AbelianIndexer) GetRawTransactionVerbose(hash string) (*types.TxInfo, e
 	return tx, nil
 }
 
-func (b *AbelianIndexer) GetRawTransaction(txHash *chainhash.Hash) (*types.TxInfo, error) {
+func (b *AbelianIndexer) GetRawTransaction(txHash *chainhash.Hash) (*model.TxInfo, error) {
 	return b.GetRawTransactionVerbose(txHash.String())
 }
 
 // GetBlockByHeight returns a raw block from the server given its height
-func (b *AbelianIndexer) GetBlockByHeight(height int64) (*types.BlockInfo, error) {
+func (b *AbelianIndexer) GetBlockByHeight(height int64) (*model.BlockInfo, error) {
 	//blockhash, err := b.client.GetBlockHash(height)
 	//if err != nil {
 	//	return nil, err
@@ -409,7 +410,7 @@ func (b *AbelianIndexer) GetBlockByHeight(height int64) (*types.BlockInfo, error
 		return nil, err
 	}
 
-	block := &types.BlockInfo{
+	block := &model.BlockInfo{
 		Height:    height,
 		BlockHash: abeBlock.BlockHash,
 		Time:      abeBlock.Time,

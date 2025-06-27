@@ -22,7 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	config2 "github.com/qday-io/qday-abel-bridge-indexer/config"
-	b2types "github.com/qday-io/qday-abel-bridge-indexer/internal/types"
+	b2types "github.com/qday-io/qday-abel-bridge-indexer/internal/model"
 	"github.com/qday-io/qday-abel-bridge-indexer/pkg/aa"
 	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/tidwall/gjson"

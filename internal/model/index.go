@@ -1,28 +1,4 @@
-package types
-
-import (
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-)
-
-// BitcoinTxIndexer defines the interface of custom bitcoin tx indexer.
-type BitcoinTxIndexer interface {
-	// ParseBlock parse bitcoin block tx
-	ParseBlock(int64, int64) ([]*BitcoinTxParseResult, *BlockInfo, error)
-	// LatestBlock get latest block height in the longest block chain.
-	LatestBlock() (int64, error)
-	// CheckConfirmations get tx detail info
-	CheckConfirmations(txHash string) error
-
-	GetRawTransactionVerbose(txHash string) (*TxInfo, error)
-	BlockChainInfo() (*BlockChainInfo, error)
-	GetRawTransaction(txHash *chainhash.Hash) (*TxInfo, error)
-	GetBlockByHeight(height int64) (*BlockInfo, error)
-}
-
-type TxIndexer interface {
-	BitcoinTxIndexer
-	Stop()
-}
+package model
 
 type BitcoinTxParseResult struct {
 	// from is l2 user address, by parse bitcoin get the address

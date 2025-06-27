@@ -1,7 +1,7 @@
 version: "3.5"
 networks:
   default:
-    name: abelian-l2
+    name: qday-indexer
 services:
   pg:
     container_name: indexer-db
@@ -21,7 +21,7 @@ services:
       - 5432:5432
   indexer:
     container_name: indexer-server
-    image: ghcr.io/qday-io/qday-abel-bridge-indexer:0.2.1
+    image: ghcr.io/qday-io/qday-abel-bridge-indexer:0.2.2
     restart: always
     depends_on:
       - pg
@@ -29,7 +29,8 @@ services:
       - 9090:9090
       - 9091:9091
     volumes:
-      - ./config:/app/config
+      - ./abi.json:/app/abi.json
+      - ./.env:/app/.env
     command:
       - /app/abe-indexer
       - start

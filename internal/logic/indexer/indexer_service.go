@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	_interface "github.com/qday-io/qday-abel-bridge-indexer/internal/interface"
 	"time"
 
-	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
-	"github.com/qday-io/qday-abel-bridge-indexer/internal/types"
-	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/cometbft/cometbft/libs/service"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"gorm.io/gorm"
 )
 
@@ -40,13 +40,13 @@ const (
 // IndexerService indexes transactions for json-rpc service.
 type IndexerService struct {
 	service.BaseService
-	txIdxr types.BitcoinTxIndexer
+	txIdxr _interface.BitcoinTxIndexer
 	db     *gorm.DB
 	log    log.Logger
 }
 
 // NewIndexerService returns a new service instance.
-func NewIndexerService(txIdxr types.BitcoinTxIndexer, db *gorm.DB, logger log.Logger) *IndexerService {
+func NewIndexerService(txIdxr _interface.BitcoinTxIndexer, db *gorm.DB, logger log.Logger) *IndexerService {
 	is := &IndexerService{txIdxr: txIdxr, db: db, log: logger}
 	is.BaseService = *service.NewBaseService(nil, ServiceName, is)
 	return is
@@ -204,7 +204,7 @@ func (bis *IndexerService) OnStart() error {
 
 // save index tx to db
 func (bis *IndexerService) SaveParsedResult(
-	parseResult *types.BitcoinTxParseResult,
+	parseResult *model.BitcoinTxParseResult,
 	btcBlockNumber int64,
 	b2TxStatus int,
 	btcBlockTime time.Time,
@@ -286,7 +286,7 @@ func (bis *IndexerService) SaveParsedResult(
 }
 
 func (bis *IndexerService) HandleResults(
-	txResults []*types.BitcoinTxParseResult,
+	txResults []*model.BitcoinTxParseResult,
 	btcIndex model.BtcIndex,
 	btcBlockTime time.Time,
 	currentBlock int64,
@@ -319,7 +319,7 @@ func (bis *IndexerService) HandleResults(
 	return currentBlock, 0, nil
 }
 
-func (bis *IndexerService) ToInFroms(a []types.BitcoinFrom, s string) bool {
+func (bis *IndexerService) ToInFroms(a []model.BitcoinFrom, s string) bool {
 	for _, i := range a {
 		if i.Address == s {
 			return true

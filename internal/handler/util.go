@@ -9,7 +9,6 @@ import (
 
 	"github.com/qday-io/qday-abel-bridge-indexer/config"
 	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
-	"github.com/qday-io/qday-abel-bridge-indexer/internal/types"
 	logger "github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/postgres"
@@ -87,10 +86,10 @@ func setupCommandContext(cmd *cobra.Command, db *gorm.DB, serverCtx *model.Conte
 	}
 
 	// Set database context
-	dbCtx := context.WithValue(currentCtx, types.DBContextKey, db)
+	dbCtx := context.WithValue(currentCtx, model.DBContextKey, db)
 
 	// Set server context
-	serverCtxPtr := currentCtx.Value(types.ServerContextKey)
+	serverCtxPtr := currentCtx.Value(model.ServerContextKey)
 	if serverCtxPtr == nil {
 		return errors.New("server context not set in command")
 	}
@@ -108,7 +107,7 @@ func setupCommandContext(cmd *cobra.Command, db *gorm.DB, serverCtx *model.Conte
 // GetServerContextFromCmd returns a Context from a command or an empty Context
 // if it has not been set.
 func GetServerContextFromCmd(cmd *cobra.Command) *model.Context {
-	if v := cmd.Context().Value(types.ServerContextKey); v != nil {
+	if v := cmd.Context().Value(model.ServerContextKey); v != nil {
 		serverCtxPtr := v.(*model.Context)
 		return serverCtxPtr
 	}

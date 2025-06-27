@@ -21,7 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	config2 "github.com/qday-io/qday-abel-bridge-indexer/config"
 	"github.com/qday-io/qday-abel-bridge-indexer/internal/logic/indexer"
-	b2types "github.com/qday-io/qday-abel-bridge-indexer/internal/types"
+	b2types "github.com/qday-io/qday-abel-bridge-indexer/internal/model"
 	logger "github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

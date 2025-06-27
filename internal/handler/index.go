@@ -8,10 +8,11 @@ import (
 	"syscall"
 	"time"
 
+	_interface "github.com/qday-io/qday-abel-bridge-indexer/internal/interface"
+
 	"github.com/qday-io/qday-abel-bridge-indexer/config"
 	"github.com/qday-io/qday-abel-bridge-indexer/internal/logic/indexer"
 	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
-	"github.com/qday-io/qday-abel-bridge-indexer/internal/types"
 	logger "github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
@@ -92,7 +93,7 @@ func runIndexerService(ctx *model.Context, cmd *cobra.Command, context osContext
 	return nil
 }
 
-func startBridgeProvider(ctx *model.Context, bitcoinCfg *config.BitcoinConfig, context osContext.Context, bidxer types.BitcoinTxIndexer, cmd *cobra.Command) error {
+func startBridgeProvider(ctx *model.Context, bitcoinCfg *config.BitcoinConfig, context osContext.Context, bidxer _interface.BitcoinTxIndexer, cmd *cobra.Command) error {
 	home := ctx.Config.RootDir
 	//bitcoinParam := config.ChainParams(bitcoinCfg.NetworkName)
 	db, err := GetDBContextFromCmd(cmd)
@@ -132,7 +133,7 @@ func startBridgeProvider(ctx *model.Context, bitcoinCfg *config.BitcoinConfig, c
 	return nil
 }
 
-func startIndexProvider(bidxer types.BitcoinTxIndexer, bidxLogger logger.Logger, cmd *cobra.Command) error {
+func startIndexProvider(bidxer _interface.BitcoinTxIndexer, bidxLogger logger.Logger, cmd *cobra.Command) error {
 
 	//bitcoinParam := config.ChainParams(bitcoinCfg.NetworkName)
 	//bidxLogger := newLogger(ctx, "[bitcoin-indexer]")
@@ -320,7 +321,7 @@ func runWithDrawService(ctx *model.Context, cmd *cobra.Command) error {
 }
 
 func GetDBContextFromCmd(cmd *cobra.Command) (*gorm.DB, error) {
-	if v := cmd.Context().Value(types.DBContextKey); v != nil {
+	if v := cmd.Context().Value(model.DBContextKey); v != nil {
 		db := v.(*gorm.DB)
 		return db, nil
 	}

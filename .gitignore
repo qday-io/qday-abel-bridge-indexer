@@ -77,3 +77,4 @@ dependency-graph.png
 contracts/@openzeppelin/*
 ./cmd/.env
 ./docker/config/.env
+/docker/db/

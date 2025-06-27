@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	_interface "github.com/qday-io/qday-abel-bridge-indexer/internal/interface"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
 	"strings"
 	"time"
 
-	"github.com/qday-io/qday-abel-bridge-indexer/config"
-	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
-	"github.com/qday-io/qday-abel-bridge-indexer/internal/types"
-	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/cometbft/cometbft/libs/service"
 	"github.com/ethereum/go-ethereum"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/qday-io/qday-abel-bridge-indexer/config"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"gorm.io/gorm"
 )
 
@@ -33,8 +33,8 @@ var ErrServerStop = errors.New("server stop")
 type BridgeDepositService struct {
 	service.BaseService
 	bridgeCfg  config.BridgeConfig
-	bridge     types.BitcoinBridge
-	btcIndexer types.BitcoinTxIndexer
+	bridge     _interface.BitcoinBridge
+	btcIndexer _interface.BitcoinTxIndexer
 	db         *gorm.DB
 	log        log.Logger
 	//wg         sync.WaitGroup
@@ -43,8 +43,8 @@ type BridgeDepositService struct {
 
 // NewBridgeDepositService returns a new service instance.
 func NewBridgeDepositService(
-	bridge types.BitcoinBridge,
-	btcIndexer types.BitcoinTxIndexer,
+	bridge _interface.BitcoinBridge,
+	btcIndexer _interface.BitcoinTxIndexer,
 	db *gorm.DB,
 	logger log.Logger,
 	bridgeCfg config.BridgeConfig,
@@ -274,7 +274,7 @@ func (bis *BridgeDepositService) HandleDeposit(deposit *model.Deposit, oldTx *et
 	}
 
 	// send deposit tx
-	b2Tx, _, aaAddress, fromAddress, err := bis.bridge.Deposit(deposit.BtcTxHash, types.BitcoinFrom{
+	b2Tx, _, aaAddress, fromAddress, err := bis.bridge.Deposit(deposit.BtcTxHash, model.BitcoinFrom{
 		Address: deposit.BtcFrom,
 	}, deposit.BtcTos, deposit.BtcValue, oldTx, nonce, resetNonce)
 	if err != nil {

@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/b2network/b2-indexer/config"
+	"github.com/qday-io/qday-abel-bridge-indexer/config"
 	"github.com/go-resty/resty/v2"
 
-	"github.com/b2network/b2-indexer/internal/model"
-	"github.com/b2network/b2-indexer/pkg/log"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"

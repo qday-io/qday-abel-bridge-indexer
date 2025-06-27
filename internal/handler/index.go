@@ -8,11 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/b2network/b2-indexer/config"
-	"github.com/b2network/b2-indexer/internal/logic/indexer"
-	"github.com/b2network/b2-indexer/internal/model"
-	"github.com/b2network/b2-indexer/internal/types"
-	logger "github.com/b2network/b2-indexer/pkg/log"
+	"github.com/qday-io/qday-abel-bridge-indexer/config"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/logic/indexer"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/types"
+	logger "github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
 )

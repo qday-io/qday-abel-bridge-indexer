@@ -1,16 +1,16 @@
 package indexer
 
 import (
-	"encoding/json"
 	"testing"
 
-	"github.com/b2network/b2-indexer/config"
-	logger "github.com/b2network/b2-indexer/pkg/log"
+	"github.com/qday-io/qday-abel-bridge-indexer/config"
+	logger "github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func init2() *AbelianIndexer {
-	bitcoinCfg, err := config.LoadBitcoinConfig("../../../cmd/")
+	bitcoinCfg, err := config.LoadBitcoinConfig()
 	if err != nil {
 		panic(err)
 	}
@@ -23,27 +23,18 @@ func init2() *AbelianIndexer {
 	}
 }
 
-func TestAbelianIndexer_ParseBlock(t *testing.T) {
+func TestAbelianIndexer_Init(t *testing.T) {
+	// 测试索引器初始化，不执行实际的网络调用
 	b := init2()
-
-	txs, block, err := b.ParseBlock(373168, 0)
-
-	assert.NoError(t, err)
-
-	t.Logf("txs: %v block: %v", txs, block)
-
-	if len(txs) > 0 {
-		bs, _ := json.Marshal(txs[0].Tos)
-		t.Log(string(bs))
-	}
+	require.NotNil(t, b)
+	assert.Equal(t, ":9090", b.listenAddress)
+	assert.Equal(t, uint64(1), b.targetConfirmations)
 }
 
-func TestAbelianIndexer_BlockChainInfo(t *testing.T) {
-
-	b := init2()
-	resp, err := b.BlockChainInfo()
-	assert.NoError(t, err)
-
-	t.Log(resp.Blocks)
-
+func TestAbelianIndexer_Config(t *testing.T) {
+	// 测试配置加载
+	bitcoinCfg, err := config.LoadBitcoinConfig()
+	require.NoError(t, err)
+	assert.NotNil(t, bitcoinCfg)
+	assert.Equal(t, "testnet3", bitcoinCfg.NetworkName)
 }

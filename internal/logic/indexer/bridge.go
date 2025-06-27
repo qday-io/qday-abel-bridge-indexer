@@ -13,10 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	config2 "github.com/b2network/b2-indexer/config"
-	b2types "github.com/b2network/b2-indexer/internal/types"
-	"github.com/b2network/b2-indexer/pkg/aa"
-	"github.com/b2network/b2-indexer/pkg/log"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -25,6 +21,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	config2 "github.com/qday-io/qday-abel-bridge-indexer/config"
+	b2types "github.com/qday-io/qday-abel-bridge-indexer/internal/types"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/aa"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/tidwall/gjson"
 )
 
@@ -72,12 +72,18 @@ func NewBridge(bridgeCfg config2.BridgeConfig, abiFileDir string, log log.Logger
 
 	var ABI string
 
-	abiFile, err := os.ReadFile(path.Join(abiFileDir, bridgeCfg.ABI))
-	if err != nil {
-		// load default abi
-		ABI = config2.DefaultDepositAbi
+	// 优先使用配置中的 ABI，如果为空则使用默认 ABI
+	if bridgeCfg.ABI != "" {
+		ABI = bridgeCfg.ABI
 	} else {
-		ABI = string(abiFile)
+		// 尝试从文件读取 ABI（向后兼容）
+		abiFile, err := os.ReadFile(path.Join(abiFileDir, "abi.json"))
+		if err != nil {
+			// 使用默认 ABI
+			ABI = config2.DefaultDepositAbi
+		} else {
+			ABI = string(abiFile)
+		}
 	}
 
 	//newParticle, err := particle.NewParticle(

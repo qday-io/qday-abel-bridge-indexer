@@ -6,14 +6,14 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/b2network/b2-indexer/config"
-	"github.com/b2network/b2-indexer/pkg/event"
+	"github.com/qday-io/qday-abel-bridge-indexer/config"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/event"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/shopspring/decimal"
 
-	"github.com/b2network/b2-indexer/internal/model"
-	"github.com/b2network/b2-indexer/pkg/log"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/cometbft/cometbft/libs/service"
 	"gorm.io/gorm"
 

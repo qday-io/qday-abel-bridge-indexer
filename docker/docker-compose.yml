@@ -23,13 +23,13 @@ services:
     container_name: indexer-server
     image: ghcr.io/qday-io/qday-abel-bridge-indexer:0.2.1
     restart: always
-    volumes:
-      - ./config:/app/config
+    depends_on:
+      - pg
     ports:
       - 9090:9090
       - 9091:9091
+    volumes:
+      - ./config:/app/config
     command:
       - /app/abe-indexer
       - start
-      - --home
-      - /app/config

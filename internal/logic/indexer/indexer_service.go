@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/b2network/b2-indexer/internal/model"
-	"github.com/b2network/b2-indexer/internal/types"
-	"github.com/b2network/b2-indexer/pkg/log"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/types"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/cometbft/cometbft/libs/service"
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"

@@ -5,7 +5,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/b2network/b2-indexer/pkg/log"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"google.golang.org/grpc/metadata"
 )
 

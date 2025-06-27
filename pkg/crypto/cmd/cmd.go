@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"syscall"
 
-	"github.com/b2network/b2-indexer/pkg/crypto"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/crypto"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )

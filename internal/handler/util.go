@@ -3,13 +3,14 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/b2network/b2-indexer/config"
-	"github.com/b2network/b2-indexer/internal/model"
-	"github.com/b2network/b2-indexer/internal/types"
-	logger "github.com/b2network/b2-indexer/pkg/log"
+	"github.com/qday-io/qday-abel-bridge-indexer/config"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/types"
+	logger "github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -48,33 +49,60 @@ func NewContext(cfg *config.Config, btcCfg *config.BitcoinConfig) *model.Context
 	}
 }
 
-func InterceptConfigsPreRunHandler(cmd *cobra.Command, home string) error {
-	cfg, err := config.LoadConfig(home)
+// InterceptConfigsPreRunHandler initializes and sets up the application context before command execution.
+// It loads configurations, establishes database connection, initializes logger, and sets up server context.
+func InterceptConfigsPreRunHandler(cmd *cobra.Command) error {
+	// Step 1: Load all configurations at once
+	appConfig, err := config.LoadAppConfig()
 	if err != nil {
-		return err
-	}
-	if home != "" {
-		cfg.RootDir = home
+		return fmt.Errorf("failed to load application config: %w", err)
 	}
 
-	bitcoinCfg, err := config.LoadBitcoinConfig(home)
+	// Step 2: Initialize logger with configuration
+	logger.Init(appConfig.LogLevel, appConfig.LogFormat)
+
+	// Step 3: Establish database connection
+	db, err := NewDBFromAppConfig(appConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to establish database connection: %w", err)
 	}
 
-	//the version no db,next open
-	db, err := NewDB(cfg)
-	if err != nil {
-		return err
+	// Step 4: Create server context with all configurations
+	serverCtx := NewContextFromAppConfig(appConfig)
+
+	// Step 5: Set up command context with database and server context
+	if err := setupCommandContext(cmd, db, serverCtx); err != nil {
+		return fmt.Errorf("failed to setup command context: %w", err)
 	}
 
-	//set db to context
-	ctx := context.WithValue(cmd.Context(), types.DBContextKey, db)
-	cmd.SetContext(ctx)
+	return nil
+}
 
-	logger.Init(cfg.LogLevel, cfg.LogFormat)
-	serverCtx := NewContext(cfg, bitcoinCfg)
-	return SetCmdServerContext(cmd, serverCtx)
+// setupCommandContext sets up the command context with database and server context.
+func setupCommandContext(cmd *cobra.Command, db *gorm.DB, serverCtx *model.Context) error {
+	// Get the current context
+	currentCtx := cmd.Context()
+	if currentCtx == nil {
+		return errors.New("command context is nil")
+	}
+
+	// Set database context
+	dbCtx := context.WithValue(currentCtx, types.DBContextKey, db)
+
+	// Set server context
+	serverCtxPtr := currentCtx.Value(types.ServerContextKey)
+	if serverCtxPtr == nil {
+		return errors.New("server context not set in command")
+	}
+
+	// Update server context
+	serverCtxValue := serverCtxPtr.(*model.Context)
+	*serverCtxValue = *serverCtx
+
+	// Set the updated context back to command
+	cmd.SetContext(dbCtx)
+
+	return nil
 }
 
 // GetServerContextFromCmd returns a Context from a command or an empty Context
@@ -88,17 +116,53 @@ func GetServerContextFromCmd(cmd *cobra.Command) *model.Context {
 	return NewDefaultContext()
 }
 
-// SetCmdServerContext sets a command's Context value to the provided argument.
-func SetCmdServerContext(cmd *cobra.Command, serverCtx *model.Context) error {
-	v := cmd.Context().Value(types.ServerContextKey)
-	if v == nil {
-		return errors.New("server context not set")
+// NewContextFromAppConfig creates a server context from unified app config
+func NewContextFromAppConfig(appConfig *config.AppConfig) *model.Context {
+	// Convert AppConfig to separate Config and BitcoinConfig for backward compatibility
+	cfg := &config.Config{
+		RootDir:                 appConfig.RootDir,
+		LogLevel:                appConfig.LogLevel,
+		LogFormat:               appConfig.LogFormat,
+		DatabaseSource:          appConfig.DatabaseSource,
+		DatabaseMaxIdleConns:    appConfig.DatabaseMaxIdleConns,
+		DatabaseMaxOpenConns:    appConfig.DatabaseMaxOpenConns,
+		DatabaseConnMaxLifetime: appConfig.DatabaseConnMaxLifetime,
 	}
 
-	serverCtxPtr := v.(*model.Context)
-	*serverCtxPtr = *serverCtx
+	bitcoinCfg := &config.BitcoinConfig{
+		NetworkName:                      appConfig.NetworkName,
+		RPCHost:                          appConfig.RPCHost,
+		RPCPort:                          appConfig.RPCPort,
+		RPCUser:                          appConfig.RPCUser,
+		RPCPass:                          appConfig.RPCPass,
+		DisableTLS:                       appConfig.DisableTLS,
+		WalletName:                       appConfig.WalletName,
+		EnableIndexer:                    appConfig.EnableIndexer,
+		IndexerListenAddress:             appConfig.IndexerListenAddress,
+		IndexerListenTargetConfirmations: appConfig.IndexerListenTargetConfirmations,
+		Bridge:                           appConfig.Bridge,
+	}
 
-	return nil
+	return &model.Context{
+		Config:        cfg,
+		BitcoinConfig: bitcoinCfg,
+	}
+}
+
+// NewDBFromAppConfig creates a new database connection from unified app config
+func NewDBFromAppConfig(appConfig *config.AppConfig) (*gorm.DB, error) {
+	// Convert AppConfig to Config for backward compatibility
+	cfg := &config.Config{
+		RootDir:                 appConfig.RootDir,
+		LogLevel:                appConfig.LogLevel,
+		LogFormat:               appConfig.LogFormat,
+		DatabaseSource:          appConfig.DatabaseSource,
+		DatabaseMaxIdleConns:    appConfig.DatabaseMaxIdleConns,
+		DatabaseMaxOpenConns:    appConfig.DatabaseMaxOpenConns,
+		DatabaseConnMaxLifetime: appConfig.DatabaseConnMaxLifetime,
+	}
+
+	return NewDB(cfg)
 }
 
 // NewDB creates a new database connection.

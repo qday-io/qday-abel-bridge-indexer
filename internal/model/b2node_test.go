@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/b2network/b2-indexer/internal/model"
-	"github.com/b2network/b2-indexer/pkg/utils"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/utils"
 )
 
 func TestValidateB2NodeColumn(t *testing.T) {

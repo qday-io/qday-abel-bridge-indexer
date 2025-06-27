@@ -75,7 +75,5 @@ dependency-graph.png
 
 # OpenZeppelin contracts
 contracts/@openzeppelin/*
-/docker/config/bitcoin.toml
-/docker/config/indexer.toml
-/cmd/bitcoin.toml
-/cmd/indexer.toml
+./cmd/.env
+./docker/config/.env

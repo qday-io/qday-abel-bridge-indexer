@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/b2network/b2-indexer/config"
+	"github.com/qday-io/qday-abel-bridge-indexer/config"
 )
 
 type Context struct {

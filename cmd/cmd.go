@@ -4,15 +4,11 @@ import (
 	"context"
 	"os"
 
-	"github.com/b2network/b2-indexer/internal/handler"
-	"github.com/b2network/b2-indexer/internal/model"
-	"github.com/b2network/b2-indexer/internal/types"
-	"github.com/b2network/b2-indexer/pkg/log"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/handler"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/model"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/types"
+	"github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/spf13/cobra"
-)
-
-const (
-	FlagHome = "home"
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -46,11 +42,7 @@ func buildIndexCmd() *cobra.Command {
 		Use:   "start",
 		Short: "start index tx service",
 		PreRunE: func(cmd *cobra.Command, _ []string) error {
-			home, err := cmd.Flags().GetString(FlagHome)
-			if err != nil {
-				return err
-			}
-			return handler.InterceptConfigsPreRunHandler(cmd, home)
+			return handler.InterceptConfigsPreRunHandler(cmd)
 		},
 		Run: func(cmd *cobra.Command, _ []string) {
 			err := handler.HandleIndexCmd(GetServerContextFromCmd(cmd), cmd)
@@ -59,7 +51,6 @@ func buildIndexCmd() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().String(FlagHome, "./", "The application home directory")
 	return cmd
 }
 

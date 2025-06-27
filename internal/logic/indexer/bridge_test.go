@@ -11,10 +11,6 @@ import (
 	"path"
 	"testing"
 
-	config2 "github.com/b2network/b2-indexer/config"
-	"github.com/b2network/b2-indexer/internal/logic/indexer"
-	b2types "github.com/b2network/b2-indexer/internal/types"
-	logger "github.com/b2network/b2-indexer/pkg/log"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/ethereum/go-ethereum"
@@ -23,6 +19,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	config2 "github.com/qday-io/qday-abel-bridge-indexer/config"
+	"github.com/qday-io/qday-abel-bridge-indexer/internal/logic/indexer"
+	b2types "github.com/qday-io/qday-abel-bridge-indexer/internal/types"
+	logger "github.com/qday-io/qday-abel-bridge-indexer/pkg/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -141,7 +141,7 @@ func TestABIPack(t *testing.T) {
 }
 
 func bridgeWithConfig(t *testing.T) *indexer.Bridge {
-	config, err := config2.LoadBitcoinConfig("")
+	config, err := config2.LoadBitcoinConfig()
 	require.NoError(t, err)
 	bridge, err := indexer.NewBridge(config.Bridge, "./", logger.NewNopLogger(), chaincfg.TestNet3Params.Name)
 	require.NoError(t, err)
@@ -177,7 +177,7 @@ func randHash(t *testing.T) string {
 // TestLocalBatchTransferWaitMined
 // Using this test method, you can batch send transactions to consume nonce
 func TestLocalBatchRestNonce(t *testing.T) {
-	config, err := config2.LoadBitcoinConfig("")
+	config, err := config2.LoadBitcoinConfig()
 	require.NoError(t, err)
 	// custom rpc key gas price
 	// config.Bridge.GasPriceMultiple = 3

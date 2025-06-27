@@ -1,20 +1,14 @@
 package cmd
 
 import (
-	"context"
 	"testing"
 
-	"github.com/b2network/b2-indexer/internal/handler"
-	"github.com/b2network/b2-indexer/internal/types"
+	"github.com/stretchr/testify/require"
 )
 
-func Test_startCmd(t *testing.T) {
+func Test_buildIndexCmd(t *testing.T) {
+	// 测试命令构建，不执行实际启动
 	cmd := buildIndexCmd()
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, types.ServerContextKey, handler.NewDefaultContext())
-	cmd.SetContext(ctx)
-	err := cmd.Execute()
-	if err != nil {
-		panic(err)
-	}
+	require.NotNil(t, cmd)
+	require.Equal(t, "start", cmd.Name())
 }

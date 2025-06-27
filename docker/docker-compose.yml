@@ -21,7 +21,7 @@ services:
       - 5432:5432
   indexer:
     container_name: indexer-server
-    image: ghcr.io/abelianl2/abe-indexer:0.1.0
+    image: ghcr.io/qday-io/qday-abel-bridge-indexer:0.2.1
     restart: always
     volumes:
       - ./config:/app/config
